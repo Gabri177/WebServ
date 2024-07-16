@@ -1,4 +1,4 @@
-#include "../include/parser_config.hpp"
+#include "../include/ConfigInfo.hpp"
 
 int	main(){
 

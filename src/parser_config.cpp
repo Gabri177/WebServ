@@ -1,4 +1,4 @@
-#include "../include/parser_config.hpp"
+#include "../include/ConfigInfo.hpp"
 
 
 static std::string										str_no_space(const std::string & ori){
