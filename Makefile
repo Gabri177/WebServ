@@ -1,18 +1,25 @@
-CFILE = main.cpp
-OFILE = $(CFILE:.cpp=.o)
-CPPFLAGS = -Wall -Wextra -Werror -std=c++98
 NAME = webserv
+
+SRC_DIR = src
+INCLUDE_DIR = include
+
+
+CPPFILES = main.cpp
+CPPFILES := $(addprefix $(SRC_DIR)/, $(CPPFILES))
+OFILES = $(CPPFILES:.cpp=.o)
+
+CPPFLAGS = -Wall -Wextra -Werror -std=c++98 -I$(INCLUDE_DIR)
 
 all: $(NAME)
 
-$(NAME): $(OFILE)
-	c++ $(CPPFLAGS) -o $(NAME) $(OFILE)
+$(NAME): $(OFILES)
+	c++ $(CPPFLAGS) -o $(NAME) $(OFILES)
 
-%.o:%.cpp
+$(SRC_DIR)/%.o: $(SRC_DIR)/%.cpp
 	c++ $(CPPFLAGS) -c -Wshadow $< -o $@
 
 clean:
-	$(RM) $(OFILE)
+	$(RM) $(OFILES)
 
 fclean: clean
 	$(RM) $(NAME)
