@@ -4,7 +4,7 @@ SRC_DIR = src
 INCLUDE_DIR = include
 
 
-CPPFILES = main.cpp
+CPPFILES = main.cpp parse_config.cpp
 CPPFILES := $(addprefix $(SRC_DIR)/, $(CPPFILES))
 OFILES = $(CPPFILES:.cpp=.o)
 
