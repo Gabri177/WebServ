@@ -29,7 +29,6 @@ ConfigInfo::ConfigInfo(const std::string & file_name){
 
 	std::string									new_line;
 	std::string									temp_key;
-	std::map<std::string, std::string>			temp_val;
 	while(std::getline(file, new_line)){
 
 		if (new_line == "\n" || new_line.empty())
