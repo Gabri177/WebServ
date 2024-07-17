@@ -32,6 +32,7 @@ class Server {
 		std::vector<int>												ports;
 
 		void															set_nonblocking(int fd);
+		void															handle_client_request(int client_fd);
 
 		
 	public:

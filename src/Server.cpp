@@ -38,9 +38,6 @@ static std::vector<int>				parse_port(const std::string & port_set){
 Server::Server(const ConfigInfo & info): _info(info.getInfo()), epoll_fd(-1){
 
 	ports = parse_port(_info["server"]["port"]);
-	for (std::vector<int>::iterator it = ports.begin(); it != ports.end(); it ++)
-		std::cout << *it << " ";
-	std::cout << std::endl;
 }
 
 Server::~Server(){
@@ -73,8 +70,6 @@ void								Server::start(){
 		host_addr.sin_family = AF_INET; //IPv4
 		host_addr.sin_addr.s_addr = htonl(INADDR_ANY); // listen all the interface of the Internet (IP) host to net long
 		host_addr.sin_port = htons(*it); // port. host to net short
-
-		std::cout << "sin_port" << host_addr.sin_port << std::endl;
 
 		if (bind(host_sock, (struct sockaddr *)&host_addr, sizeof(host_addr)) == -1)
 			err_close_throw(host_sock, "Server start error!!!");
@@ -135,28 +130,32 @@ void								Server::start(){
 						err_close_throw(events[i].data.fd, "Server error: epoll_ctl failed to add client");
 					}
 				}
-			} else {
-
-				// Handle client requests
-				int		client_fd = events[i].data.fd;
-				char	buffer[1024];
-				ssize_t count;
-
-				while ((count = read(client_fd, buffer, sizeof(buffer))) > 0) {
-
-					// Echo back the data
-					write(client_fd, buffer, count);
-					printf ("Receive data: %s\n", buffer);
-					memset(&buffer, 0, sizeof(buffer));
-				}
-				if (count == -1 && errno != EAGAIN) {
-
-					close(client_fd);
-					throw std::runtime_error("Server error: read failed");
-				}
-				if (count == 0)
-					close(client_fd);
-			}
+			} else
+				handle_client_request(events[i].data.fd);
 		}
 	}
+}
+
+// Handle client requests
+void								Server::handle_client_request(int client_fd){
+
+	char	buffer[1024];
+	ssize_t count;
+
+	count = 0;
+	memset(&buffer, 0, sizeof(buffer));
+	while ((count = read(client_fd, buffer, sizeof(buffer))) > 0) {
+
+		// Echo back the data
+		write(client_fd, buffer, count);
+		printf ("Receive data: %s\n", buffer);
+		memset(&buffer, 0, sizeof(buffer));
+	}
+	if (count == -1 && errno != EAGAIN) {
+
+		close(client_fd);
+		throw std::runtime_error("Server error: read failed");
+	}
+	if (count == 0)
+		close(client_fd);
 }
