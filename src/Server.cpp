@@ -82,13 +82,16 @@ void								Server::start(){
 		for (int i = 0; i < num_fds; ++i) {
 			if (events[i].data.fd == host_sock) {
 				while (true) {
-					struct sockaddr_in client_addr;
-					socklen_t client_len = sizeof(client_addr);
-					int client_fd = accept(host_sock, (struct sockaddr *)&client_addr, &client_len);
+					struct sockaddr_in	client_addr;
+					socklen_t 			client_len = sizeof(client_addr);
+					int 				client_fd = accept(host_sock, (struct sockaddr *)&client_addr, &client_len);
+
 					if (client_fd == -1) {
-						if (errno == EAGAIN || errno == EWOULDBLOCK) {
-							break; // No more incoming connections
-						} else
+
+						// No more incoming connections
+						if (errno == EAGAIN || errno == EWOULDBLOCK)
+							break;
+						else
 							err_close_throw(host_sock, "Server error: accept failed");
 					}
 
@@ -105,22 +108,23 @@ void								Server::start(){
 				}
 			} else {
 				// Handle client requests
-				int client_fd = events[i].data.fd;
-				char buffer[512];
+				int		client_fd = events[i].data.fd;
+				char	buffer[1024];
 				ssize_t count;
+
 				while ((count = read(client_fd, buffer, sizeof(buffer))) > 0) {
-					write(client_fd, buffer, count); // Echo back the data
+
+					// Echo back the data
+					write(client_fd, buffer, count);
 					printf ("Receive data: %s\n", buffer);
 					memset(&buffer, 0, sizeof(buffer));
 				}
 				if (count == -1 && errno != EAGAIN) {
 					close(client_fd);
-					close(host_sock);
-					throw std::runtime_error("Server error: read failed");
+					err_close_throw(host_sock, "Server error: read failed");
 				}
-				if (count == 0) {
-					close(client_fd); // Client disconnected
-				}
+				if (count == 0)
+					close(client_fd);
 			}
 		}
 	}
