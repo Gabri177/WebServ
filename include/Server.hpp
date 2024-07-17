@@ -19,6 +19,7 @@
 # include <cstring>
 # include <vector>
 # include <sstream>
+# include "./RequestHandler.hpp"
 
 class ConfigInfo;
 
@@ -32,7 +33,6 @@ class Server {
 		std::vector<int>												ports;
 
 		void															set_nonblocking(int fd);
-		void															handle_client_request(int client_fd);
 
 		
 	public:
