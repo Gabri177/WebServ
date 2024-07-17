@@ -17,6 +17,8 @@
 # include <cerrno>
 # include <map>
 # include <cstring>
+# include <vector>
+# include <sstream>
 
 class ConfigInfo;
 
@@ -26,7 +28,8 @@ class Server {
 		
 		std::map<std::string, std::map<std::string, std::string> >		_info;
 		int																epoll_fd;
-		int																host_sock;
+		std::vector<int>												host_socks;
+		std::vector<int>												ports;
 
 		void															set_nonblocking(int fd);
 

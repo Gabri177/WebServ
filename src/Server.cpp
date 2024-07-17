@@ -18,17 +18,37 @@ static void							err_close_throw(int sock, const std::string & info){
 	throw std::runtime_error(info);
 }
 
+static std::vector<int>				parse_port(const std::string & port_set){
+
+	std::vector<int>	temp;
+	std::string			token;
+	std::stringstream	ss(port_set);
+
+	while(std::getline(ss, token, ',')){
+
+		int port;
+		std::stringstream	convert(token);
+		convert >> port;
+		temp.push_back(port);
+	}
+	return temp;
+}
+
 // Load configuration file information, set up epoll event sheet and host sock
 Server::Server(const ConfigInfo & info): _info(info.getInfo()), epoll_fd(-1), host_sock(-1){
 
+	ports = parse_port(_info["server"]["port"]);
 }
 
 Server::~Server(){
 
 	if (epoll_fd != -1)
 		close(epoll_fd);
-	if (host_sock != -1)
-		close(host_sock);
+	for (std::vector<int>::iterator it = host_socks.begin(); it != host_socks.end(); it ++){
+
+		if (*it != -1)
+			close (*it);
+	}
 }
 
 
@@ -36,41 +56,40 @@ void								Server::start(){
 
 	struct sockaddr_in		host_addr;
 
-	//host buzon set
-	if ((host_sock = socket(AF_INET, SOCK_STREAM, 0)) == -1)
-		throw std::runtime_error("Server start error!!!");
-	
-	memset(&host_addr, 0, sizeof(host_addr));
-	host_addr.sin_family = AF_INET; //IPv4
-	host_addr.sin_addr.s_addr = htonl(INADDR_ANY); // listen all the interface of the Internet (IP) host to net long
-
-	char	*end;
-	int		host_port = std::strtol(_info["server"]["port"].c_str(), &end, 10);
-	if (*end != '\0')
-		err_close_throw(host_sock, "Port format error!!!");
-	
-	host_addr.sin_port = htons(host_port); // port. host to net short
-
-	if (bind(host_sock, (struct sockaddr *)&host_addr, sizeof(host_addr)) == -1)
-		err_close_throw(host_sock, "Server start error!!!");
-	
-	if (listen(host_sock, 4096) == -1)
-		err_close_throw(host_sock, "Server start error!!!");
-
-	set_nonblocking(host_sock);
-
 	if ((epoll_fd = epoll_create1(0)) == -1)
-		err_close_throw(host_sock, "Server start error!!!");
+		std::runtime_error("Epoll event establish error!!!");
 
+	std::vector<int>::iterator	it = ports.begin();
+	while (it != ports.end()){
 
-	struct epoll_event event;
-	event.data.fd = host_sock;
-	event.events = EPOLLIN | EPOLLET; // see in man epoll_ctl
+		int host_sock = -1;
+		//host buzon set
+		if ((host_sock = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+			throw std::runtime_error("Server start error!!!");
+		memset(&host_addr, 0, sizeof(host_addr));
+		host_addr.sin_family = AF_INET; //IPv4
+		host_addr.sin_addr.s_addr = htonl(INADDR_ANY); // listen all the interface of the Internet (IP) host to net long
+		host_addr.sin_port = htons(*it); // port. host to net short
 
-	//add the host_sock in the epoll event to listen
-	if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, host_sock, &event) == -1)
-		err_close_throw(host_sock, "Server start error!!!");
+		if (bind(host_sock, (struct sockaddr *)&host_addr, sizeof(host_addr)) == -1)
+			err_close_throw(host_sock, "Server start error!!!");
+		
+		if (listen(host_sock, 4096) == -1)
+			err_close_throw(host_sock, "Server start error!!!");
 
+		set_nonblocking(host_sock);
+
+		struct epoll_event event;
+		event.data.fd = host_sock;
+		event.events = EPOLLIN | EPOLLET; // see in man epoll_ctl
+
+		//add the host_sock in the epoll event to listen
+		if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, host_sock, &event) == -1)
+			err_close_throw(host_sock, "Server start error!!!");
+		host_socks.push_back(host_sock)
+		it ++;
+	}
+	
 	std::cout << "Server started successfully on port " << host_port << std::endl;
 
 
@@ -84,11 +103,11 @@ void								Server::start(){
 
 
 		for (int i = 0; i < num_fds; ++i) {
-			if (events[i].data.fd == host_sock) {
+			if (std::find(host_socks.begin(), host_socks.end(), events[i].data.fd) != host_socks.end()) {
 				while (true) {
 					struct sockaddr_in	client_addr;
 					socklen_t 			client_len = sizeof(client_addr);
-					int 				client_fd = accept(host_sock, (struct sockaddr *)&client_addr, &client_len);
+					int 				client_fd = accept(events[i].data.fd, (struct sockaddr *)&client_addr, &client_len);
 
 					if (client_fd == -1) {
 
@@ -108,7 +127,7 @@ void								Server::start(){
 					if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_fd, &client_event) == -1) {
 
 						close(client_fd);
-						err_close_throw(host_sock, "Server error: epoll_ctl failed to add client");
+						err_close_throw(events[i].data.fd, "Server error: epoll_ctl failed to add client");
 					}
 				}
 			} else {
