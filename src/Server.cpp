@@ -11,6 +11,12 @@ void								Server::set_nonblocking(int fd){
 		throw std::runtime_error("fcntl F_SETFL error!!!");
 }
 
+static void							err_close_throw(int sock, const std::string & info){
+
+	close(sock);
+	throw std::runtime_error(info);
+}
+
 Server::Server(const ConfigInfo & info): _info(info.getInfo()), epoll_fd(-1), host_sock(-1){
 
 }
@@ -37,42 +43,29 @@ void								Server::start(){
 
 	char	*end;
 	int		host_port = std::strtol(_info["server"]["port"].c_str(), &end, 10);
-	if (*end != '\0'){
-
-		close(host_sock);
-		throw std::runtime_error("Port format error!!!");
-	}
+	if (*end != '\0')
+		err_close_throw(host_sock, "Port format error!!!")
+	
 	host_addr.sin_port = htons(host_port);
 
-	if (bind(host_sock, (struct sockaddr *)&host_addr, sizeof(host_addr)) == -1){
-
-		close(host_sock);
-		throw std::runtime_error("Server start error!!!");
-	}
+	if (bind(host_sock, (struct sockaddr *)&host_addr, sizeof(host_addr)) == -1)
+		err_close_throw(host_sock, "Server start error!!!");
 	
-	if (listen(host_sock, 1024) == -1){
-
-		close(host_sock);
-		throw std::runtime_error("Server start error!!!");
-	}
+	if (listen(host_sock, 1024) == -1)
+		err_close_throw(host_sock, "Server start error!!!");
 
 	set_nonblocking(host_sock);
 
-	if ((epoll_fd = epoll_create1(0)) == -1){
-		
-		close(host_sock);
-		throw std::runtime_error("Server start error!!!");
-	}
+	if ((epoll_fd = epoll_create1(0)) == -1)
+		err_close_throw(host_sock, "Server start error!!!");
+
 
 	struct epoll_event event;
 	event.data.fd = host_sock;
 	event.events = EPOLLIN | EPOLLET;
 
-	if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, host_sock, &event) == -1){
-
-		close(host_sock);
-		throw std::runtime_error("Server start error!!!");
-	}
+	if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, host_sock, &event) == -1)
+		err_close_throw(host_sock, "Server start error!!!");
 
 	std::cout << "Server started successfully on port " << host_port << std::endl;
 
@@ -82,10 +75,9 @@ void								Server::start(){
 
 	while (true) {
 		int num_fds = epoll_wait(epoll_fd, events, MAX_EVENTS, -1);
-		if (num_fds == -1) {
-			close(host_sock);
-			throw std::runtime_error("Server error: epoll_wait failed");
-		}
+		if (num_fds == -1)
+			err_close_throw(host_sock, "Server error: epoll_wait failed");
+
 
 		for (int i = 0; i < num_fds; ++i) {
 			if (events[i].data.fd == host_sock) {
@@ -96,10 +88,8 @@ void								Server::start(){
 					if (client_fd == -1) {
 						if (errno == EAGAIN || errno == EWOULDBLOCK) {
 							break; // No more incoming connections
-						} else {
-							close(host_sock);
-							throw std::runtime_error("Server error: accept failed");
-						}
+						} else
+							err_close_throw(host_sock, "Server error: accept failed");
 					}
 
 					set_nonblocking(client_fd);
@@ -110,8 +100,7 @@ void								Server::start(){
 
 					if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_fd, &client_event) == -1) {
 						close(client_fd);
-						close(host_sock);
-						throw std::runtime_error("Server error: epoll_ctl failed to add client");
+						err_close_throw(host_sock, "Server error: epoll_ctl failed to add client");
 					}
 				}
 			} else {
