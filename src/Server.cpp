@@ -73,6 +73,64 @@ void								Server::start(){
 		close(host_sock);
 		throw std::runtime_error("Server start error!!!");
 	}
-	
+
 	std::cout << "Server started successfully on port " << host_port << std::endl;
+
+
+	const int MAX_EVENTS = 10;
+	struct epoll_event events[MAX_EVENTS];
+
+	while (true) {
+		int num_fds = epoll_wait(epoll_fd, events, MAX_EVENTS, -1);
+		if (num_fds == -1) {
+			close(host_sock);
+			throw std::runtime_error("Server error: epoll_wait failed");
+		}
+
+		for (int i = 0; i < num_fds; ++i) {
+			if (events[i].data.fd == host_sock) {
+				while (true) {
+					struct sockaddr_in client_addr;
+					socklen_t client_len = sizeof(client_addr);
+					int client_fd = accept(host_sock, (struct sockaddr *)&client_addr, &client_len);
+					if (client_fd == -1) {
+						if (errno == EAGAIN || errno == EWOULDBLOCK) {
+							break; // No more incoming connections
+						} else {
+							close(host_sock);
+							throw std::runtime_error("Server error: accept failed");
+						}
+					}
+
+					set_nonblocking(client_fd);
+
+					struct epoll_event client_event;
+					client_event.data.fd = client_fd;
+					client_event.events = EPOLLIN | EPOLLET;
+
+					if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_fd, &client_event) == -1) {
+						close(client_fd);
+						close(host_sock);
+						throw std::runtime_error("Server error: epoll_ctl failed to add client");
+					}
+				}
+			} else {
+				// Handle client requests
+				int client_fd = events[i].data.fd;
+				char buffer[512];
+				ssize_t count;
+				while ((count = read(client_fd, buffer, sizeof(buffer))) > 0) {
+					write(client_fd, buffer, count); // Echo back the data
+				}
+				if (count == -1 && errno != EAGAIN) {
+					close(client_fd);
+					close(host_sock);
+					throw std::runtime_error("Server error: read failed");
+				}
+				if (count == 0) {
+					close(client_fd); // Client disconnected
+				}
+			}
+		}
+	}
 }
