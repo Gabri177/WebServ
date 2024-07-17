@@ -28,7 +28,7 @@ class Server {
 		int																epoll_fd;
 		int																host_sock;
 
-		void															set_nonblockint(int fd);
+		void															set_nonblocking(int fd);
 
 		
 	public:

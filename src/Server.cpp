@@ -2,7 +2,7 @@
 
 
 
-void								Server::set_nonblockint(int fd){
+void								Server::set_nonblocking(int fd){
 
 	int flags = fcntl(fd, F_GETFL, 0);
 	if (flags == -1)
@@ -56,7 +56,7 @@ void								Server::start(){
 		throw std::runtime_error("Server start error!!!");
 	}
 
-	set_nonblockint(host_sock);
+	set_nonblocking(host_sock);
 
 	if ((epoll_fd = epoll_create1(0)) == -1){
 		
@@ -121,6 +121,8 @@ void								Server::start(){
 				ssize_t count;
 				while ((count = read(client_fd, buffer, sizeof(buffer))) > 0) {
 					write(client_fd, buffer, count); // Echo back the data
+					printf ("Receive data: %s\n", buffer);
+					memset(&buffer, 0, sizeof(buffer));
 				}
 				if (count == -1 && errno != EAGAIN) {
 					close(client_fd);
