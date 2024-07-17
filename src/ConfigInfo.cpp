@@ -49,7 +49,7 @@ ConfigInfo::ConfigInfo(const std::string & file_name){
 
 ConfigInfo::~ConfigInfo(){}
 
-std::map<std::string, std::string>	&					ConfigInfo::operator[](const std::string & key_name){
+std::map<std::string, std::string>						ConfigInfo::operator[](const std::string & key_name){
 
 	std::map<std::string, std::map<std::string, std::string> >::iterator	it = _data.find(key_name);
 	if (it != _data.end())
@@ -58,3 +58,10 @@ std::map<std::string, std::string>	&					ConfigInfo::operator[](const std::strin
 		throw std::runtime_error("The key to search does nos exist!!!");
 }	
 
+std::map<std::string, std::map<std::string, std::string> >		ConfigInfo::getInfo() const{
+
+	if (!_data.empty())
+		return _data;
+	else
+		throw std::runtime_error("The config file is empty!!!");
+}

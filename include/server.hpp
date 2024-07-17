@@ -10,14 +10,22 @@
 # include <cstdlib>
 # include <cstdio>
 # include "./ConfigInfo.hpp"
+# include <cerrno>
+# include <map>
 
 class ConfigInfo;
 
 class Server {
 
+	private:
+		
+		std::map<std::string, std::map<std::string, std::string> >		_info;
+
+		
 	public:
-												Server(const std::string & config_file);
-												~Server();
+																		Server(const ConfigInfo & info);
+																		~Server();
+		void															start();
 };
 
 #endif
