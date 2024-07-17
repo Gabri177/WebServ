@@ -49,7 +49,7 @@ ConfigInfo::ConfigInfo(const std::string & file_name){
 
 ConfigInfo::~ConfigInfo(){}
 
-std::map<std::string, std::string>						ConfigInfo::operator[](const std::string & key_name){
+std::map<std::string, std::string>	&					ConfigInfo::operator[](const std::string & key_name){
 
 	std::map<std::string, std::map<std::string, std::string> >::iterator	it = _data.find(key_name);
 	if (it != _data.end())
