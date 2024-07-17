@@ -74,6 +74,8 @@ void								Server::start(){
 		host_addr.sin_addr.s_addr = htonl(INADDR_ANY); // listen all the interface of the Internet (IP) host to net long
 		host_addr.sin_port = htons(*it); // port. host to net short
 
+		std::cout << "sin_port" << host_addr.sin_port << std::endl;
+
 		if (bind(host_sock, (struct sockaddr *)&host_addr, sizeof(host_addr)) == -1)
 			err_close_throw(host_sock, "Server start error!!!");
 		
