@@ -1,10 +1,10 @@
 NAME = webserv
 
-SRC_DIR = src
-INCLUDE_DIR = include
+SRC_DIR = ./src
+INCLUDE_DIR = ./include
 
 
-CPPFILES = main.cpp ConfigInfo.cpp
+CPPFILES = main.cpp ConfigInfo.cpp Server.cpp
 CPPFILES := $(addprefix $(SRC_DIR)/, $(CPPFILES))
 OFILES = $(CPPFILES:.cpp=.o)
 

@@ -2,19 +2,30 @@
 
 
 
-Server::Server(const ConfigInfo & info){
+void								Server::set_nonblockint(int fd){
 
-	_info = info.getInfo();
+	int flags = fcntl(fd, F_GETFL, 0);
+	if (flags == -1)
+		throw std::runtime_error("fcntl F_GETFL error!!!");
+	if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1)
+		throw std::runtime_error("fcntl F_SETFL error!!!");
+}
+
+Server::Server(const ConfigInfo & info): _info(info.getInfo()), epoll_fd(-1), host_sock(-1){
+
 }
 
 Server::~Server(){
 
+	if (epoll_fd != -1)
+		close(epoll_fd);
+	if (host_sock != -1)
+		close(host_sock);
 }
 
 
 void								Server::start(){
 
-	int						host_sock;
 	struct sockaddr_in		host_addr;
 
 	if ((host_sock = socket(AF_INET, SOCK_STREAM, 0)) == -1)
@@ -40,6 +51,24 @@ void								Server::start(){
 	}
 	
 	if (listen(host_sock, 1024) == -1){
+
+		close(host_sock);
+		throw std::runtime_error("Server start error!!!");
+	}
+
+	set_nonblockint(host_sock);
+
+	if ((epoll_fd = epoll_create1(0)) == -1){
+		
+		close(host_sock);
+		throw std::runtime_error("Server start error!!!");
+	}
+
+	struct epoll_event event;
+	event.data.fd = host_sock;
+	event.events = EPOLLIN | EPOLLET;
+
+	if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, host_sock, &event) == -1){
 
 		close(host_sock);
 		throw std::runtime_error("Server start error!!!");
