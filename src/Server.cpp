@@ -47,7 +47,7 @@ void								Server::start(){
 	char	*end;
 	int		host_port = std::strtol(_info["server"]["port"].c_str(), &end, 10);
 	if (*end != '\0')
-		err_close_throw(host_sock, "Port format error!!!")
+		err_close_throw(host_sock, "Port format error!!!");
 	
 	host_addr.sin_port = htons(host_port); // port. host to net short
 
@@ -126,7 +126,7 @@ void								Server::start(){
 					memset(&buffer, 0, sizeof(buffer));
 				}
 				if (count == -1 && errno != EAGAIN) {
-					
+
 					close(client_fd);
 					err_close_throw(host_sock, "Server error: read failed");
 				}
