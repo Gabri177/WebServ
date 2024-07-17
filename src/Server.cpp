@@ -65,7 +65,7 @@ void								Server::start(){
 
 	struct epoll_event event;
 	event.data.fd = host_sock;
-	event.events = EPOLLIN | EPOLLET;
+	event.events = EPOLLIN | EPOLLET; // see in man epoll_ctl
 
 	//add the host_sock in the epoll event to listen
 	if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, host_sock, &event) == -1)
