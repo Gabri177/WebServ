@@ -35,9 +35,12 @@ static std::vector<int>				parse_port(const std::string & port_set){
 }
 
 // Load configuration file information, set up epoll event sheet and host sock
-Server::Server(const ConfigInfo & info): _info(info.getInfo()), epoll_fd(-1), host_sock(-1){
+Server::Server(const ConfigInfo & info): _info(info.getInfo()), epoll_fd(-1){
 
 	ports = parse_port(_info["server"]["port"]);
+	for (std::vector<int>::iterator it = ports.begin(); it != ports.end(); it ++)
+		std::cout << *it << " ";
+	std::cout << std::endl;
 }
 
 Server::~Server(){
@@ -86,11 +89,11 @@ void								Server::start(){
 		//add the host_sock in the epoll event to listen
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, host_sock, &event) == -1)
 			err_close_throw(host_sock, "Server start error!!!");
-		host_socks.push_back(host_sock)
+		host_socks.push_back(host_sock);
 		it ++;
 	}
 	
-	std::cout << "Server started successfully on port " << host_port << std::endl;
+	std::cout << "Server started successfully on port "  << std::endl;
 
 
 	const int MAX_EVENTS = 10; // the maximium event can be solved at the same time
@@ -99,7 +102,7 @@ void								Server::start(){
 	while (true) {
 		int num_fds = epoll_wait(epoll_fd, events, MAX_EVENTS, -1);
 		if (num_fds == -1)
-			err_close_throw(host_sock, "Server error: epoll_wait failed");
+			throw std::runtime_error("Server error: epoll_wait failed");
 
 
 		for (int i = 0; i < num_fds; ++i) {
@@ -115,7 +118,7 @@ void								Server::start(){
 						if (errno == EAGAIN || errno == EWOULDBLOCK)
 							break;
 						else
-							err_close_throw(host_sock, "Server error: accept failed");
+							throw std::runtime_error("Server error: accept failed");
 					}
 
 					set_nonblocking(client_fd);
@@ -147,7 +150,7 @@ void								Server::start(){
 				if (count == -1 && errno != EAGAIN) {
 
 					close(client_fd);
-					err_close_throw(host_sock, "Server error: read failed");
+					throw std::runtime_error("Server error: read failed");
 				}
 				if (count == 0)
 					close(client_fd);
