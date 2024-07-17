@@ -102,11 +102,13 @@ void								Server::start(){
 					client_event.events = EPOLLIN | EPOLLET;
 
 					if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_fd, &client_event) == -1) {
+
 						close(client_fd);
 						err_close_throw(host_sock, "Server error: epoll_ctl failed to add client");
 					}
 				}
 			} else {
+
 				// Handle client requests
 				int		client_fd = events[i].data.fd;
 				char	buffer[1024];
@@ -120,6 +122,7 @@ void								Server::start(){
 					memset(&buffer, 0, sizeof(buffer));
 				}
 				if (count == -1 && errno != EAGAIN) {
+					
 					close(client_fd);
 					err_close_throw(host_sock, "Server error: read failed");
 				}
