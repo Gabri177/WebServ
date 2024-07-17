@@ -1,7 +1,7 @@
 #include "../include/Server.hpp"
 
 
-
+// Set file descriptor to non-blocking state
 void								Server::set_nonblocking(int fd){
 
 	int flags = fcntl(fd, F_GETFL, 0);
@@ -11,12 +11,14 @@ void								Server::set_nonblocking(int fd){
 		throw std::runtime_error("fcntl F_SETFL error!!!");
 }
 
+// Alternative Functions for Reducing Code
 static void							err_close_throw(int sock, const std::string & info){
 
 	close(sock);
 	throw std::runtime_error(info);
 }
 
+// Load configuration file information, set up epoll event sheet and host sock
 Server::Server(const ConfigInfo & info): _info(info.getInfo()), epoll_fd(-1), host_sock(-1){
 
 }
@@ -34,24 +36,25 @@ void								Server::start(){
 
 	struct sockaddr_in		host_addr;
 
+	//host buzon set
 	if ((host_sock = socket(AF_INET, SOCK_STREAM, 0)) == -1)
 		throw std::runtime_error("Server start error!!!");
 	
 	memset(&host_addr, 0, sizeof(host_addr));
-	host_addr.sin_family = AF_INET;
-	host_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+	host_addr.sin_family = AF_INET; //IPv4
+	host_addr.sin_addr.s_addr = htonl(INADDR_ANY); // listen all the interface of the Internet (IP) host to net long
 
 	char	*end;
 	int		host_port = std::strtol(_info["server"]["port"].c_str(), &end, 10);
 	if (*end != '\0')
 		err_close_throw(host_sock, "Port format error!!!")
 	
-	host_addr.sin_port = htons(host_port);
+	host_addr.sin_port = htons(host_port); // port. host to net short
 
 	if (bind(host_sock, (struct sockaddr *)&host_addr, sizeof(host_addr)) == -1)
 		err_close_throw(host_sock, "Server start error!!!");
 	
-	if (listen(host_sock, 1024) == -1)
+	if (listen(host_sock, 4096) == -1)
 		err_close_throw(host_sock, "Server start error!!!");
 
 	set_nonblocking(host_sock);
@@ -64,13 +67,14 @@ void								Server::start(){
 	event.data.fd = host_sock;
 	event.events = EPOLLIN | EPOLLET;
 
+	//add the host_sock in the epoll event to listen
 	if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, host_sock, &event) == -1)
 		err_close_throw(host_sock, "Server start error!!!");
 
 	std::cout << "Server started successfully on port " << host_port << std::endl;
 
 
-	const int MAX_EVENTS = 10;
+	const int MAX_EVENTS = 10; // the maximium event can be solved at the same time
 	struct epoll_event events[MAX_EVENTS];
 
 	while (true) {
