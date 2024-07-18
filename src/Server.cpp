@@ -18,6 +18,7 @@ static void							err_close_throw(int sock, const std::string & info){
 	throw std::runtime_error(info);
 }
 
+// If it needs to listen more than ont port
 static std::vector<int>				parse_port(const std::string & port_set){
 
 	std::vector<int>	temp;
@@ -70,12 +71,10 @@ void								Server::start(){
 		host_addr.sin_family = AF_INET; //IPv4
 
 		//
-		struct in_addr	addr;
-		if (inet_pton(AF_INET, _info["server"]["host"].c_str(), &addr) != 1)
+		if (inet_pton(AF_INET, _info["server"]["host"].c_str(), &host_addr.sin_addr.s_addr) != 1)
 			throw std::runtime_error("Error: transfer host ip to unit32_t!!!");
 		//
 		//host_addr.sin_addr.s_addr = htonl(INADDR_ANY); // listen all the interface of the Internet (IP) host to net long
-		host_addr.sin_addr.s_addr = addr.s_addr;
 		host_addr.sin_port = htons(*it); // port. host to net short
 
 		if (bind(host_sock, (struct sockaddr *)&host_addr, sizeof(host_addr)) == -1)
