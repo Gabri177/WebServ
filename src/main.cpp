@@ -1,4 +1,4 @@
-#include "../include/ConfigInfo.hpp"
+#include "../include/Config.hpp"
 #include "../include/Server.hpp"
 
 int	main(int argc, char **argv){
@@ -13,8 +13,9 @@ int	main(int argc, char **argv){
 		std::cout << "Error: Wrong arguments!!!" << std::endl;
 		return 1;
 	}
-	ConfigInfo	_config(config_file);
-	Server		_serv(_config);
+	Config	_config;
+	_config.parseConfig(config_file);
+	Server		_serv(_config.servers);
 
 	//std::cout << _config["server"]["port"] << std::endl;
 	_serv.start();

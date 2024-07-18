@@ -18,25 +18,9 @@ static void							err_close_throw(int sock, const std::string & info){
 	throw std::runtime_error(info);
 }
 
-// If it needs to listen more than ont port
-static std::vector<int>				parse_port(const std::string & port_set){
-
-	std::vector<int>	temp;
-	std::string			token;
-	std::stringstream	ss(port_set);
-
-	while(std::getline(ss, token, ',')){
-
-		int port;
-		std::stringstream	convert(token);
-		convert >> port;
-		temp.push_back(port);
-	}
-	return temp;
-}
 
 // Load configuration file information, set up epoll event sheet and host sock
-Server::Server(const ServerConfig & info): _info(info), epoll_fd(-1){
+Server::Server(const std::vector<ServerConfig> & info): _info(info), epoll_fd(-1){
 
 }
 
@@ -62,7 +46,7 @@ void								Server::start(){
 	for (std::vector<ServerConfig>::iterator its = _info.begin(); its != _info.end(); its++){
 
 		std::vector<int>::iterator	it = (*its)._port.begin();
-		while (it != (*it)._port.end()){
+		while (it != (*its)._port.end()){
 
 			int host_sock = -1;
 			//host buzon set
@@ -71,18 +55,19 @@ void								Server::start(){
 			memset(&host_addr, 0, sizeof(host_addr));
 			host_addr.sin_family = AF_INET; //IPv4
 
-			//
-			if (inet_pton(AF_INET, (*its)._ip, &host_addr.sin_addr.s_addr) != 1)
+			std::cout << "ip :: " << its->_ip << std::endl;
+			if (inet_pton(AF_INET, (*its)._ip.c_str(), &host_addr.sin_addr.s_addr) != 1)
 				throw std::runtime_error("Error: transfer host ip to unit32_t!!!");
 			//
 			//host_addr.sin_addr.s_addr = htonl(INADDR_ANY); // listen all the interface of the Internet (IP) host to net long
+			std::cout << "current port : " << *it << std::endl;
 			host_addr.sin_port = htons(*it); // port. host to net short
 
 			if (bind(host_sock, (struct sockaddr *)&host_addr, sizeof(host_addr)) == -1)
-				err_close_throw(host_sock, "Server start error!!!");
+				err_close_throw(host_sock, "Server start error33333!!!");
 			
 			if (listen(host_sock, 4096) == -1)
-				err_close_throw(host_sock, "Server start error!!!");
+				err_close_throw(host_sock, "Server start error22222!!!");
 
 			set_nonblocking(host_sock);
 
@@ -92,7 +77,7 @@ void								Server::start(){
 
 			//add the host_sock in the epoll event to listen
 			if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, host_sock, &event) == -1)
-				err_close_throw(host_sock, "Server start error!!!");
+				err_close_throw(host_sock, "Server start error11111!!!");
 			host_socks.push_back(host_sock);
 			it ++;
 		}

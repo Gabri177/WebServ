@@ -10,15 +10,6 @@ static std::string										str_no_space(const std::string & ori){
 
 }
 
-static std::pair<std::string, std::string>				str_split(const std::string & line, char deliminator){
-
-
-	size_t	p_deliminator = line.find(deliminator);
-	if (p_deliminator == std::string::npos)
-		throw std::invalid_argument("Error: Invalid format in config file!!!");
-	return std::make_pair(str_no_space(line.substr(0, p_deliminator)), str_no_space(line.substr(p_deliminator + 1)));
-}
-
 static std::vector<int>				parse_port(const std::string & port_set){
 
 	std::vector<int>	temp;
@@ -100,9 +91,9 @@ LocationConfig								parseLocation(const std::string & content){
 
 void                                        Config::parseConfig(const std::string & filename){
 
-    std::ifstream               file(filename);
+    std::ifstream               file(filename.c_str());
     if (!file.is_open())
-        throw std::runtime_error("Error: coould not open the file!!!");
+        throw std::runtime_error("Error: could not open the file!!!");
     
     std::string  				line;
     ServerConfig 				serverConfig;
@@ -129,10 +120,15 @@ void                                        Config::parseConfig(const std::strin
 			
         }else if (FWord == "listen"){
 
+            std::string  cur_ip;
 			size_t				start = SWord.find_first_of(':');
 			if (start == std::string::npos)
 				throw std::runtime_error("Error: wrong format in ip and port set!!!");
-			serverConfig._ip = str_no_space(SWord.substr(0, start));
+            cur_ip = str_no_space(SWord.substr(0, start));
+            if (cur_ip == "localhost")
+			    serverConfig._ip = "0.0.0.0";
+            else
+                serverConfig._ip = cur_ip;
 			serverConfig._port = parse_port(SWord.substr(start + 1));
 			// for (std::vector<int>::iterator it = serverConfig._port.begin(); it != serverConfig._port.end(); it ++)
 			// 	std::cout << "  " << *it;
