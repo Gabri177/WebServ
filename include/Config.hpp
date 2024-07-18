@@ -7,10 +7,11 @@
 # include <sstream>
 # include <string>
 # include <cstdlib>
+# include <fstream>
 
 struct LocationConfig {
 
-    std::string                             _root;
+    //std::string                             _root;
     size_t                                  _client_size;
     std::vector<std::string>                _methods;
     bool                                    _autoindex;
@@ -23,8 +24,8 @@ struct LocationConfig {
 struct ServerConfig {
 
     std::string                             _name;
+    std::vector<int>                        _port;
     std::string                             _ip;
-    std::string                             _port;
     std::string                             _root;
     std::string                             _index;
     std::vector<std::string>                _methods;
@@ -36,11 +37,13 @@ struct ServerConfig {
 
 class Config {
 
-    private:
-
+    public:
+        std::vector<ServerConfig>           servers;
+        void                                parseConfig(const std::string & filename);
         
 };
 
-
-
 #endif
+
+
+
