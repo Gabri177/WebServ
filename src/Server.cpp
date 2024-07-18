@@ -68,7 +68,14 @@ void								Server::start(){
 			throw std::runtime_error("Server start error!!!");
 		memset(&host_addr, 0, sizeof(host_addr));
 		host_addr.sin_family = AF_INET; //IPv4
-		host_addr.sin_addr.s_addr = htonl(INADDR_ANY); // listen all the interface of the Internet (IP) host to net long
+
+		//
+		struct in_addr	addr;
+		if (inet_pton(AF_INET, _info["server"]["host"].c_str(), &addr) != 1)
+			throw std::runtime_error("Error: transfer host ip to unit32_t!!!");
+		//
+		//host_addr.sin_addr.s_addr = htonl(INADDR_ANY); // listen all the interface of the Internet (IP) host to net long
+		host_addr.sin_addr.s_addr = addr.s_addr;
 		host_addr.sin_port = htons(*it); // port. host to net short
 
 		if (bind(host_sock, (struct sockaddr *)&host_addr, sizeof(host_addr)) == -1)
