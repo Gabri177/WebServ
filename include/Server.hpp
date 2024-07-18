@@ -13,7 +13,7 @@
 # include <cstdlib>
 # include <cstdio>
 # include <fcntl.h>
-# include "./ConfigInfo.hpp"
+# include "./Config.hpp"
 # include <cerrno>
 # include <map>
 # include <cstring>
@@ -27,7 +27,8 @@ class Server {
 
 	private:
 		
-		std::map<std::string, std::map<std::string, std::string> >		_info;
+		//std::map<std::string, std::map<std::string, std::string> >		_info;
+		std::vector<ServerConfig>										_info;
 		int																epoll_fd;
 		std::vector<int>												host_socks;
 		std::vector<int>												ports;
@@ -36,7 +37,7 @@ class Server {
 
 		
 	public:
-																		Server(const ConfigInfo & info);
+																		Server(const std::vector<ServerConfig> & info);
 																		~Server();
 		void															start();
 };
