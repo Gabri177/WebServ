@@ -2,7 +2,7 @@
 
 int main() {
     Config config;
-    config.parseConfig("/Users/gabrielgao/Desktop/42/WebServ/config/Linux_example_online.conf");
+    config.parseConfig("./config/Linux_example_online.conf");
 
     for (std::vector<ServerConfig>::iterator it = config.servers.begin(); it != config.servers.end(); it ++){
 
