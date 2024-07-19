@@ -15,8 +15,8 @@ void								handle_client_request(int client_fd){
 
 		// Echo back the data
 		write(client_fd, buffer, count);
-		//char test[] = "HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: 12\n\nHello World!";
-		//write(client_fd, test, sizeof(test));
+		//std::string test = "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length:100\n\n<html><title>dsfsdfsf</title><body>" + std::string(buffer) +"<ln>testtesttest</ln></body></html>";
+		//write(client_fd, test.c_str(), test.size());
 		printf ("Receive data: %s\n", buffer);
 		memset(&buffer, 0, sizeof(buffer));
 	}
