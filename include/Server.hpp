@@ -14,7 +14,6 @@
 # include <cstdio>
 # include <fcntl.h>
 # include "./Config.hpp"
-# include <cerrno>
 # include <map>
 # include <cstring>
 # include <vector>
