@@ -20,112 +20,247 @@ static void	err_close_throw(int sock, const std::string & info){
 
 
 // Load configuration file information, set up epoll event sheet and host sock
-Server::Server(const std::vector<ServerConfig> & info): _info(info), epoll_fd(-1){
 
+Server::Server(const std::vector<ServerConfig> &info)
+    : _info(info)
+#ifdef __APPLE__
+    , kq(-1)
+#else
+    , epoll_fd(-1)
+#endif
+{}
+
+Server::~Server() {
+#ifdef __APPLE__
+    if (kq != -1)
+        close(kq);
+#else
+    if (epoll_fd != -1)
+        close(epoll_fd);
+#endif
+	for (std::vector<int>::iterator it = host_socks.begin(); it != host_socks.end(); ++it) {
+        if (*it != -1)
+            close(*it);
+    }
 }
 
-Server::~Server(){
+void Server::start() {
+    struct sockaddr_in host_addr;
 
-	if (epoll_fd != -1)
-		close(epoll_fd);
-	for (std::vector<int>::iterator it = host_socks.begin(); it != host_socks.end(); it ++){
+#ifdef __APPLE__
+    if ((kq = kqueue()) == -1)
+        throw std::runtime_error("kqueue creation error!!!");
+#else
+    if ((epoll_fd = epoll_create1(0)) == -1)
+        throw std::runtime_error("epoll creation error!!!");
+#endif
 
-		if (*it != -1)
-			close (*it);
-	}
+    for (std::vector<ServerConfig>::iterator its = _info.begin(); its != _info.end(); ++its) {
+        for (std::vector<int>::iterator it = (*its)._port.begin(); it != (*its)._port.end(); ++it) {
+            int host_sock = -1;
+            if ((host_sock = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+                throw std::runtime_error("Server start error!!!");
+            memset(&host_addr, 0, sizeof(host_addr));
+            host_addr.sin_family = AF_INET;
+            if (inet_pton(AF_INET, (*its)._ip.c_str(), &host_addr.sin_addr.s_addr) != 1)
+                throw std::runtime_error("Error: transfer host ip to uint32_t!!!");
+            host_addr.sin_port = htons(*it);
+
+            if (bind(host_sock, (struct sockaddr *)&host_addr, sizeof(host_addr)) == -1)
+                err_close_throw(host_sock, "Server start error!!!");
+
+            if (listen(host_sock, 4096) == -1)
+                err_close_throw(host_sock, "Server start error!!!");
+
+            set_nonblocking(host_sock);
+
+#ifdef __APPLE__
+            struct kevent event;
+            EV_SET(&event, host_sock, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
+
+            if (kevent(kq, &event, 1, NULL, 0, NULL) == -1)
+                err_close_throw(host_sock, "kevent error!!!");
+#else
+            struct epoll_event event;
+            event.data.fd = host_sock;
+            event.events = EPOLLIN | EPOLLET;
+
+            if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, host_sock, &event) == -1)
+                err_close_throw(host_sock, "epoll_ctl error!!!");
+#endif
+            host_socks.push_back(host_sock);
+        }
+    }
+
+    std::cout << "Server started successfully on port " << std::endl;
+
+    const int MAX_EVENTS = 10;
+#ifdef __APPLE__
+    struct kevent events[MAX_EVENTS];
+#else
+    struct epoll_event events[MAX_EVENTS];
+#endif
+
+    while (true) {
+#ifdef __APPLE__
+        int num_fds = kevent(kq, NULL, 0, events, MAX_EVENTS, NULL);
+#else
+        int num_fds = epoll_wait(epoll_fd, events, MAX_EVENTS, -1);
+#endif
+        if (num_fds == -1)
+            throw std::runtime_error("kevent/epoll_wait error!!!");
+
+        for (int i = 0; i < num_fds; ++i) {
+#ifdef __APPLE__
+            if (std::find(host_socks.begin(), host_socks.end(), events[i].ident) != host_socks.end()) {
+                while (true) {
+                    struct sockaddr_in client_addr;
+                    socklen_t client_len = sizeof(client_addr);
+                    int client_fd = accept(events[i].ident, (struct sockaddr *)&client_addr, &client_len);
+
+                    if (client_fd == -1) {
+                        if (errno == EAGAIN || errno == EWOULDBLOCK)
+                            break;
+                        else
+                            throw std::runtime_error("accept error!!!");
+                    }
+
+                    set_nonblocking(client_fd);
+
+                    struct kevent client_event;
+                    EV_SET(&client_event, client_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
+
+                    if (kevent(kq, &client_event, 1, NULL, 0, NULL) == -1) {
+                        close(client_fd);
+                        throw std::runtime_error("kevent client add error!!!");
+                    }
+                }
+            } else {
+                handle_client_request(events[i].ident);
+            }
+#else
+            if (std::find(host_socks.begin(), host_socks.end(), events[i].data.fd) != host_socks.end()) {
+                while (true) {
+                    struct sockaddr_in client_addr;
+                    socklen_t client_len = sizeof(client_addr);
+                    int client_fd = accept(events[i].data.fd, (struct sockaddr *)&client_addr, &client_len);
+
+                    if (client_fd == -1) {
+                        if (errno == EAGAIN || errno == EWOULDBLOCK)
+                            break;
+                        else
+                            throw std::runtime_error("accept error!!!");
+                    }
+
+                    set_nonblocking(client_fd);
+
+                    struct epoll_event client_event;
+                    client_event.data.fd = client_fd;
+                    client_event.events = EPOLLIN | EPOLLET;
+
+                    if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_fd, &client_event) == -1) {
+                        close(client_fd);
+                        throw std::runtime_error("epoll_ctl client add error!!!");
+                    }
+                }
+            } else {
+                handle_client_request(events[i].data.fd);
+            }
+#endif
+        }
+    }
 }
 
-
-void	Server::start(){
-
-	struct sockaddr_in	host_addr;
-
-	if ((epoll_fd = epoll_create1(0)) == -1)
-		std::runtime_error("Epoll event establish error!!!");
-
-	for (std::vector<ServerConfig>::iterator its = _info.begin(); its != _info.end(); its++){
-
-		std::vector<int>::iterator	it = (*its)._port.begin();
-		while (it != (*its)._port.end()){
-
-			int host_sock = -1;
-			//host buzon set
-			if ((host_sock = socket(AF_INET, SOCK_STREAM, 0)) == -1)
-				throw std::runtime_error("Server start error!!!");
-			memset(&host_addr, 0, sizeof(host_addr));
-			host_addr.sin_family = AF_INET; //IPv4
-
-			std::cout << "ip :: " << its->_ip << std::endl;
-			if (inet_pton(AF_INET, (*its)._ip.c_str(), &host_addr.sin_addr.s_addr) != 1)
-				throw std::runtime_error("Error: transfer host ip to unit32_t!!!");
-			//
-			//host_addr.sin_addr.s_addr = htonl(INADDR_ANY); // listen all the interface of the Internet (IP) host to net long
-			std::cout << "current port : " << *it << std::endl;
-			host_addr.sin_port = htons(*it); // port. host to net short
-
-			if (bind(host_sock, (struct sockaddr *)&host_addr, sizeof(host_addr)) == -1)
-				err_close_throw(host_sock, "Server start error33333!!!");
-			
-			if (listen(host_sock, 4096) == -1)
-				err_close_throw(host_sock, "Server start error22222!!!");
-
-			set_nonblocking(host_sock);
-
-			struct epoll_event event;
-			event.data.fd = host_sock;
-			event.events = EPOLLIN | EPOLLET; // see in man epoll_ctl
-
-			//add the host_sock in the epoll event to listen
-			if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, host_sock, &event) == -1)
-				err_close_throw(host_sock, "Server start error11111!!!");
-			host_socks.push_back(host_sock);
-			it ++;
-		}
-	}
-	
-	std::cout << "Server started successfully on port "  << std::endl;
-
-
-	const int MAX_EVENTS = 10; // the maximium event can be solved at the same time
-	struct epoll_event events[MAX_EVENTS];
-
-	while (true) {
-		int num_fds = epoll_wait(epoll_fd, events, MAX_EVENTS, -1);
-		if (num_fds == -1)
-			throw std::runtime_error("Server error: epoll_wait failed");
-
-
-		for (int i = 0; i < num_fds; ++i) {
-			if (std::find(host_socks.begin(), host_socks.end(), events[i].data.fd) != host_socks.end()) {
-				while (true) {
-					struct sockaddr_in	client_addr;
-					socklen_t 			client_len = sizeof(client_addr);
-					int 				client_fd = accept(events[i].data.fd, (struct sockaddr *)&client_addr, &client_len);
-
-					if (client_fd == -1) {
-
-						// No more incoming connections
-						if (errno == EAGAIN || errno == EWOULDBLOCK)
-							break;
-						else
-							throw std::runtime_error("Server error: accept failed");
-					}
-
-					set_nonblocking(client_fd);
-
-					struct epoll_event client_event;
-					client_event.data.fd = client_fd;
-					client_event.events = EPOLLIN | EPOLLET;
-
-					if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_fd, &client_event) == -1) {
-
-						close(client_fd);
-						err_close_throw(events[i].data.fd, "Server error: epoll_ctl failed to add client");
-					}
-				}
-			} else
-				handle_client_request(events[i].data.fd);
-		}
-	}
-}
+//void	Server::start(){
+//
+//	struct sockaddr_in	host_addr;
+//
+//	if ((epoll_fd = epoll_create1(0)) == -1)
+//		std::runtime_error("Epoll event establish error!!!");
+//
+//	for (std::vector<ServerConfig>::iterator its = _info.begin(); its != _info.end(); its++){
+//
+//		std::vector<int>::iterator	it = (*its)._port.begin();
+//		while (it != (*its)._port.end()){
+//
+//			int host_sock = -1;
+//			//host buzon set
+//			if ((host_sock = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+//				throw std::runtime_error("Server start error!!!");
+//			memset(&host_addr, 0, sizeof(host_addr));
+//			host_addr.sin_family = AF_INET; //IPv4
+//
+//			std::cout << "ip :: " << its->_ip << std::endl;
+//			if (inet_pton(AF_INET, (*its)._ip.c_str(), &host_addr.sin_addr.s_addr) != 1)
+//				throw std::runtime_error("Error: transfer host ip to unit32_t!!!");
+//			//
+//			//host_addr.sin_addr.s_addr = htonl(INADDR_ANY); // listen all the interface of the Internet (IP) host to net long
+//			std::cout << "current port : " << *it << std::endl;
+//			host_addr.sin_port = htons(*it); // port. host to net short
+//
+//			if (bind(host_sock, (struct sockaddr *)&host_addr, sizeof(host_addr)) == -1)
+//				err_close_throw(host_sock, "Server start error33333!!!");
+//			
+//			if (listen(host_sock, 4096) == -1)
+//				err_close_throw(host_sock, "Server start error22222!!!");
+//
+//			set_nonblocking(host_sock);
+//
+//			struct epoll_event event;
+//			event.data.fd = host_sock;
+//			event.events = EPOLLIN | EPOLLET; // see in man epoll_ctl
+//
+//			//add the host_sock in the epoll event to listen
+//			if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, host_sock, &event) == -1)
+//				err_close_throw(host_sock, "Server start error11111!!!");
+//			host_socks.push_back(host_sock);
+//			it ++;
+//		}
+//	}
+//	
+//	std::cout << "Server started successfully on port "  << std::endl;
+//
+//
+//	const int MAX_EVENTS = 10; // the maximium event can be solved at the same time
+//	struct epoll_event events[MAX_EVENTS];
+//
+//	while (true) {
+//		int num_fds = epoll_wait(epoll_fd, events, MAX_EVENTS, -1);
+//		if (num_fds == -1)
+//			throw std::runtime_error("Server error: epoll_wait failed");
+//
+//
+//		for (int i = 0; i < num_fds; ++i) {
+//			if (std::find(host_socks.begin(), host_socks.end(), events[i].data.fd) != host_socks.end()) {
+//				while (true) {
+//					struct sockaddr_in	client_addr;
+//					socklen_t 			client_len = sizeof(client_addr);
+//					int 				client_fd = accept(events[i].data.fd, (struct sockaddr *)&client_addr, &client_len);
+//
+//					if (client_fd == -1) {
+//
+//						// No more incoming connections
+//						if (errno == EAGAIN || errno == EWOULDBLOCK)
+//							break;
+//						else
+//							throw std::runtime_error("Server error: accept failed");
+//					}
+//
+//					set_nonblocking(client_fd);
+//
+//					struct epoll_event client_event;
+//					client_event.data.fd = client_fd;
+//					client_event.events = EPOLLIN | EPOLLET;
+//
+//					if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_fd, &client_event) == -1) {
+//
+//						close(client_fd);
+//						err_close_throw(events[i].data.fd, "Server error: epoll_ctl failed to add client");
+//					}
+//				}
+//			} else
+//				handle_client_request(events[i].data.fd);
+//		}
+//	}
+//}
 
