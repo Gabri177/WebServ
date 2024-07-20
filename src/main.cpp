@@ -13,6 +13,7 @@ int	main(int argc, char **argv){
 		std::cout << "Error: Wrong arguments!!!" << std::endl;
 		return 1;
 	}
+	std::cout << "Using configuration file: " << config_file << std::endl;
 	Config	_config;
 	_config.parseConfig(config_file);
 	Server		_serv(_config.servers);
