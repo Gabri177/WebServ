@@ -4,7 +4,7 @@ SRC_DIR = ./src
 INCLUDE_DIR = ./include
 
 
-CPPFILES = main.cpp Config.cpp Server.cpp RequestHandler.cpp
+CPPFILES = main.cpp Config.cpp Server.cpp RequestHandler.cpp HttpRequest.cpp
 CPPFILES := $(addprefix $(SRC_DIR)/, $(CPPFILES))
 OFILES = $(CPPFILES:.cpp=.o)
 
