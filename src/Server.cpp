@@ -2,7 +2,7 @@
 
 
 // Set file descriptor to non-blocking state
-void								Server::set_nonblocking(int fd){
+void	Server::set_nonblocking(int fd){
 
 	int flags = fcntl(fd, F_GETFL, 0);
 	if (flags == -1)
@@ -12,7 +12,7 @@ void								Server::set_nonblocking(int fd){
 }
 
 // Alternative Functions for Reducing Code
-static void							err_close_throw(int sock, const std::string & info){
+static void	err_close_throw(int sock, const std::string & info){
 
 	close(sock);
 	throw std::runtime_error(info);
@@ -36,9 +36,9 @@ Server::~Server(){
 }
 
 
-void								Server::start(){
+void	Server::start(){
 
-	struct sockaddr_in		host_addr;
+	struct sockaddr_in	host_addr;
 
 	if ((epoll_fd = epoll_create1(0)) == -1)
 		std::runtime_error("Epoll event establish error!!!");
