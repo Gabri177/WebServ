@@ -57,9 +57,11 @@ static bool					is_exist_url(const std::string & url){
 	
 	std::string url_path;
 	if (url.find('.') != std::string::npos)
-		url_path = url.substr(0, url.find_last_of('/') + 1);
+		url_path = url.substr(0, url.find_last_of('/'));
 	else
 		url_path = url;
+	if (url_path == "")
+		url_path = "/";
 	std::cout << "url pathhhh: " << url_path << std::endl;
 	bool	is_exist = false;
 	for (t_config_it it = g_config.begin(); it != g_config.end(); it ++){
@@ -100,9 +102,11 @@ static std::string			urlToFilePath(const std::string & url, const std::string & 
 	//std::cout << "find url" << url << std::endl;
 	std::string url_path;
 	if (url.find('.') != std::string::npos)
-		url_path = url.substr(0, url.find_last_of('/') + 1);
+		url_path = url.substr(0, url.find_last_of('/'));
 	else
 		url_path = url;
+	if (url_path == "")
+		url_path = "/";
 	for (t_config_it it = g_config.begin(); it != g_config.end(); it ++){
 		if((*it)._location.find(url_path) != (*it)._location.end()){
 			if (!(*it)._location[url_path]._root.empty() && std::find((*it)._location[url_path]._methods.begin(), (*it)._location[url_path]._methods.end(), meth) != (*it)._location[url_path]._methods.end()){
