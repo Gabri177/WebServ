@@ -20,15 +20,14 @@ struct LocationConfig {
     std::map<int, std::string>              _err_page;
     std::string                             _return_url;
 
-    LocationConfig(){
-
-        _root = "";
-        _client_size = 0;
-        _autoindex = false;
-        _cgi = "";
-        _index = "";
-        _return_url = "";
-    }
+    LocationConfig()
+        : _root(""),
+          _client_size(0),
+          _autoindex(false),
+          _cgi(""),
+          _index(""),
+          _return_url("")
+    {}
 };
 
 struct ServerConfig {
@@ -43,6 +42,17 @@ struct ServerConfig {
     std::map<int, std::string>              _err_page;
     std::map<std::string, LocationConfig>   _location;
     
+    ServerConfig()
+        : _name(""),
+          _port(),
+          _ip(""),
+          _root(""),
+          _index(""),
+          _methods(),
+          _client_size(0),
+          _err_page(),
+          _location()
+    {}
 };
 
 typedef std::vector<ServerConfig>                           t_config;
