@@ -1,15 +1,5 @@
 #include "../include/HttpResponse.hpp"
 
-// static std::string										str_no_space(const std::string & ori){
-
-// 	size_t	start = ori.find_first_not_of(' ');
-// 	if (start == std::string::npos)
-// 		return	ori;
-// 	size_t	end	  = ori.find_last_not_of(' ');
-// 	return ori.substr(start, end - start + 1);
-
-// }
-
 std::string getContentType(const std::string& file_extension){
 
     static std::map<std::string, std::string> content_types;
@@ -212,26 +202,6 @@ void					HttpResponse::handleGet(const HttpRequest & request){
 		std::cout << e.what() << std::endl;
 	}
 }
-
-// static std::string 		parseContentDisposition(const std::string &content_disposition) {
-
-//     std::stringstream ss(content_disposition);
-//     std::string token;
-//     std::string filename;
-
-//     while (std::getline(ss, token, ';')) {
-//         size_t pos = token.find("filename=");
-//         if (pos != std::string::npos) {
-//             filename = token.substr(pos + 9);
-//             filename = str_no_space(filename);
-//             if (filename.front() == '"' && filename.back() == '"')
-//                 filename = filename.substr(1, filename.size() - 2);
-//             break;
-//         }
-//     }
-
-//     return filename;
-// }
 
 
 void					HttpResponse::handlePost(const HttpRequest & request){
