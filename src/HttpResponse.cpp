@@ -312,19 +312,19 @@ HttpResponse::HttpResponse(const HttpRequest & request, int clt_fd): http_versio
 		}
 	}
 
-	if (request.headers.find("Host") != request.headers.end()){
+	if (is_find && request.headers.find("Host") != request.headers.end()){
 
 		std::string		name = request.headers.find("Host")->second;
 		if (name.find(':') == std::string::npos){
 			
 			for (t_config_it it = g_config.begin(); it != g_config.end(); it ++){
 
-				if ((*it)._name == name && is_find == true){
+				if ((*it)._name == name && (*it)._ip == server_ip && std::find((*it)._port.begin(), (*it)._port.end(), server_port) != (*it)._port.end()){
 					this->CurrentServerConfig = *it;
 					break ;
 				}
 			}
-			this->CurrentServerConfig = g_config[0];
+			
 		}
 	}
 
