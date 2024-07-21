@@ -41,7 +41,7 @@ struct ServerConfig {
     size_t                                  _client_size;
     std::map<int, std::string>              _err_page;
     std::map<std::string, LocationConfig>   _location;
-    
+
     ServerConfig()
         : _name(""),
           _port(),
@@ -58,7 +58,7 @@ struct ServerConfig {
 typedef std::vector<ServerConfig>                           t_config;
 typedef std::vector<ServerConfig>::iterator                 t_config_it;
 typedef std::map<std::string, LocationConfig>::iterator     t_location_it;
-extern t_config                             g_config;
+extern t_config                                             g_config;
 
 class Config {
 
