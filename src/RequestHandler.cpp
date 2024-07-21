@@ -25,6 +25,9 @@ void handle_client_request(int client_fd) {
     std::vector<char> request_buffer;
     size_t bytes_read;
 
+    
+
+    
     while ((bytes_read = recv(client_fd, buffer, buffer_size, 0)) > 0) {
         request_buffer.insert(request_buffer.end(), buffer, buffer + bytes_read);
         if (std::string(buffer, buffer + bytes_read).find("\r\n\r\n") != std::string::npos) {
@@ -43,6 +46,8 @@ void handle_client_request(int client_fd) {
         //std::cout << "Request str :" << request_str << "      " << request_str.size() << std::endl;
         HttpRequestParser parser;
         HttpRequest request = parser.parse(request_str);
+
+        //std::cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++Server ip:  " << client_fd << std::endl;
 
         
         //std::cout << " Content length: " << request.content_length << std::endl;
@@ -79,7 +84,7 @@ void handle_client_request(int client_fd) {
         // const char* response_template = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s";
         // char response[1024];
         // int response_length = snprintf(response, sizeof(response), response_template, strlen(response_body), response_body);
-        HttpResponse  res_msg_obj(request);
+        HttpResponse  res_msg_obj(request, client_fd);
         std::string   msg = res_msg_obj.CreateResponse();
 
         send(client_fd, msg.c_str(), msg.size(), 0);

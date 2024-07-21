@@ -130,6 +130,7 @@ std::vector<ServerConfig>                    Config::parseConfig(const std::stri
 			if (start == std::string::npos)
 				throw std::runtime_error("Error: wrong format in ip and port set!!!");
             cur_ip = str_no_space(SWord.substr(0, start));
+			//std::cout << "CURRRRRIP : "  << cur_ip << std::endl;
             if (cur_ip == "localhost")
 			    serverConfig._ip = "0.0.0.0";
             else

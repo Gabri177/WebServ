@@ -15,7 +15,9 @@
 #include <stdexcept>
 #include <iostream>
 
-HttpRequestParser::HttpRequestParser() : state(REQUEST_LINE) {}
+HttpRequestParser::HttpRequestParser() : state(REQUEST_LINE) {
+
+}
 
 HttpRequest HttpRequestParser::parse(const std::string &request) {
     HttpRequest httpRequest;

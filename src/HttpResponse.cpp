@@ -97,7 +97,7 @@ static std::string			getHttpDate(){
 	return std::string(buffer);
 }
 
-static std::string			urlToFilePath(const std::string & url, const std::string & meth){
+std::string					HttpResponse::urlToFilePath(const std::string & url, const std::string & meth){
 
 	//std::cout << "find url" << url << std::endl;
 	std::string url_path;
@@ -107,35 +107,35 @@ static std::string			urlToFilePath(const std::string & url, const std::string & 
 		url_path = url;
 	if (url_path == "")
 		url_path = "/";
-	for (t_config_it it = g_config.begin(); it != g_config.end(); it ++){
-		if((*it)._location.find(url_path) != (*it)._location.end()){
-			if (!(*it)._location[url_path]._root.empty() && std::find((*it)._location[url_path]._methods.begin(), (*it)._location[url_path]._methods.end(), meth) != (*it)._location[url_path]._methods.end()){
-				if ((*it)._location[url_path]._root != "/")
-					return (*it)._location[url_path]._root + url;
+	//for (t_config_it it = g_config.begin(); it != g_config.end(); it ++){
+		if((CurrentServerConfig)._location.find(url_path) != (CurrentServerConfig)._location.end()){
+			if (!(CurrentServerConfig)._location[url_path]._root.empty() && std::find((CurrentServerConfig)._location[url_path]._methods.begin(), (CurrentServerConfig)._location[url_path]._methods.end(), meth) != (CurrentServerConfig)._location[url_path]._methods.end()){
+				if ((CurrentServerConfig)._location[url_path]._root != "/")
+					return (CurrentServerConfig)._location[url_path]._root + url;
 				else
 					return url;
 			}
 		}
-	}
+	//}
 
-	for (t_config_it it = g_config.begin(); it != g_config.end(); it ++){
-		if (!(*it)._root.empty() && std::find((*it)._methods.begin(), (*it)._methods.end(), meth) != (*it)._methods.end()){
-			if ((*it)._root != "/"){
+	//for (t_config_it it = g_config.begin(); it != g_config.end(); it ++){
+		if (!(CurrentServerConfig)._root.empty() && std::find((CurrentServerConfig)._methods.begin(), (CurrentServerConfig)._methods.end(), meth) != (CurrentServerConfig)._methods.end()){
+			if ((CurrentServerConfig)._root != "/"){
 				std::ifstream	file(url);
 				if (file.is_open())
 					return url;
 			} else {
-				std::ifstream	file(((*it)._root + url));
+				std::ifstream	file(((CurrentServerConfig)._root + url));
 				if (file.is_open())
-					return (*it)._root + url;
+					return (CurrentServerConfig)._root + url;
 			}
 		}
-	}
+	//}
 	//std::cout << "no exist" << std::endl;
 	return url;
 }
 
-static std::string			loadFileContent(const std::string & url, const std::string & meth){
+std::string					HttpResponse::loadFileContent(const std::string & url, const std::string & meth){
 
 	std::ifstream	file(urlToFilePath(url, meth));
 	std::cout << "absolute path : " << urlToFilePath(url, meth) << std::endl;
@@ -144,7 +144,7 @@ static std::string			loadFileContent(const std::string & url, const std::string 
 		std::cout << "file opend..." << std::endl;
 		std::stringstream	buffer;
 		buffer << file.rdbuf();
-		//std::cout << "file content: " << buffer.str() << std::endl;
+		std::cout << "file content: " << buffer.str() << std::endl;
 		return buffer.str();
 	}else{
 		return "";
@@ -280,9 +280,54 @@ void					HttpResponse::handlePost(const HttpRequest & request){
 // }
 
 
-HttpResponse::HttpResponse(const HttpRequest & request): http_version(request.http_version){
+HttpResponse::HttpResponse(const HttpRequest & request, int clt_fd): http_version(request.http_version){
 
+	// find the server config to see if it comfort those limits
+	struct sockaddr_in server_addr;
+    socklen_t server_addr_len = sizeof(server_addr);
+    if (getsockname(clt_fd, (struct sockaddr*)&server_addr, &server_addr_len) == -1) {
+        
+		std::cout << "Could not find the current server ip for the request!!!!" << std::endl;
+        Default404Set(request);
+        return;
+    }
+    std::string server_ip = inet_ntoa(server_addr.sin_addr);
+	int			server_port = ntohs(server_addr.sin_port);
+
+	std::cout << "                          port:" << server_port << std::endl;
+	std::cout << "                          ip  :" << server_ip << std::endl;
+	bool is_find = false;
+	for (t_config_it it = g_config.begin(); it != g_config.end(); it ++){
+		
+		if ((*it)._ip == server_ip && std::find((*it)._port.begin(), (*it)._port.end(), server_port) != (*it)._port.end()){
+			this->CurrentServerConfig = *it;
+			is_find = true;
+			break ;
+		}
+		
+		if ((*it)._ip == "0.0.0.0" && std::find((*it)._port.begin(), (*it)._port.end(), server_port) != (*it)._port.end()){
+			this->CurrentServerConfig = *it;
+			is_find = true;
+			break ;
+		}
+	}
+	if (!is_find){
+
+		std::cout << "Could not find the current server ip for the request!!!!" << std::endl;
+        Default404Set(request);
+        return;
+	}
+
+	if (sizeof(request.body) > CurrentServerConfig._client_size){
+
+		std::cout << "Client body size is too large!!!" << std::endl;
+        Default404Set(request);
+        return;
+	}
+
+	// To see if exist the url in the configfile if no it will find the url (root + filename)
 	if (!is_exist_url(request.url)){
+
 		std::cout << "No pass the url test, do not exist!!!" << std::endl;
         Default404Set(request);
         return;

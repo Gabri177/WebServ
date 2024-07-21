@@ -16,7 +16,6 @@
 # define RES_STATUS_CREATED "Created"
 
 class HttpRequest;
-
 typedef enum  status_respond{
 
 	OK = 200,
@@ -32,14 +31,17 @@ struct HttpResponse{
 	std::map<std::string, std::string>	headers;
 	std::string							body;
 
-										HttpResponse(const HttpRequest & request);
+										HttpResponse(const HttpRequest & request, int clt_fd);
 	std::string							CreateResponse();
 
 	private:
 
+		ServerConfig					CurrentServerConfig;
 		void							Default404Set(const HttpRequest & request);
 		void							handleGet(const HttpRequest & request);
 		void							handlePost(const HttpRequest & request);
+		std::string						urlToFilePath(const std::string & url, const std::string & meth);
+		std::string						loadFileContent(const std::string & url, const std::string & meth);
 		//void							handleDelete(const HttpRequest & request);
 };
 
