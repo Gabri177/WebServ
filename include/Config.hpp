@@ -11,7 +11,7 @@
 
 struct LocationConfig {
 
-    //std::string                             _root;
+    std::string                             _root;
     size_t                                  _client_size;
     std::vector<std::string>                _methods;
     bool                                    _autoindex;
@@ -35,11 +35,16 @@ struct ServerConfig {
     
 };
 
+typedef std::vector<ServerConfig>                           t_config;
+typedef std::vector<ServerConfig>::iterator                 t_config_it;
+typedef std::map<std::string, LocationConfig>::iterator     t_location_it;
+extern t_config                             g_config;
+
 class Config {
 
     public:
         std::vector<ServerConfig>           servers;
-        void                                parseConfig(const std::string & filename);
+        std::vector<ServerConfig>           parseConfig(const std::string & filename);
         
 };
 

@@ -1,6 +1,9 @@
 #include "../include/Config.hpp"
 #include "../include/Server.hpp"
 
+
+t_config  g_config;
+
 int	main(int argc, char **argv){
 
 	std::string config_file;
@@ -15,9 +18,8 @@ int	main(int argc, char **argv){
 	}
 	std::cout << "Using configuration file: " << config_file << std::endl;
 	Config	_config;
-	_config.parseConfig(config_file);
-	Server		_serv(_config.servers);
-
+	g_config = _config.parseConfig(config_file);
+	Server		_serv(g_config);
 	//std::cout << _config["server"]["port"] << std::endl;
 	_serv.start();
 

@@ -13,6 +13,7 @@
 #include "HttpRequest.hpp"
 #include <sstream>
 #include <stdexcept>
+#include <iostream>
 
 HttpRequestParser::HttpRequestParser() : state(REQUEST_LINE) {}
 
@@ -21,6 +22,7 @@ HttpRequest HttpRequestParser::parse(const std::string &request) {
     std::istringstream request_stream(request);
     std::string line;
 
+    httpRequest.content_length = 0;
     while (std::getline(request_stream, line)) {
         if (line[line.size() - 1] == '\r') {
             line = line.substr(0, line.size() - 1);
@@ -39,7 +41,7 @@ HttpRequest HttpRequestParser::parse(const std::string &request) {
                 }
                 break;
             case BODY:
-                httpRequest.body += line + "\n";
+                httpRequest.body += line + "\r\n";
                 break;
         }
     }
@@ -60,6 +62,15 @@ void HttpRequestParser::parseHeaderLine(const std::string &line, HttpRequest &ht
         std::string header_value = line.substr(colon_pos + 1);
         header_value = header_value.substr(header_value.find_first_not_of(" \t"));
         httpRequest.headers[header_name] = header_value;
+
+        //std::cout << "Header_Name                       \"" << header_name << "\"" << std::endl;
+        //std::cout << "Header_Value                       \"" << header_value << "\"" << std::endl;
+        if (header_name == "Content-Length") {
+
+            char *end;
+            httpRequest.content_length = std::strtol(header_value.c_str(), &end, 10);
+            //std::cout << "LENGTH==================================" << httpRequest.content_length << "=============" << std::endl;
+        }
     }
 }
 

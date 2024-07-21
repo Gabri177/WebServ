@@ -84,12 +84,17 @@ LocationConfig								parseLocation(const std::string & content){
 			std::string  path;
 			iss_line >> path;
 			loc._index = path;
+		}else if (FWord == "root"){
+
+			std::string root;
+			iss_line >> root;
+			loc._root = root;
 		}
 	}
 	return loc;
 }
-
-void                                        Config::parseConfig(const std::string & filename){
+ 
+std::vector<ServerConfig>                    Config::parseConfig(const std::string & filename){
 
     std::ifstream               file(filename.c_str());
     if (!file.is_open())
@@ -185,4 +190,5 @@ void                                        Config::parseConfig(const std::strin
         servers.push_back(serverConfig);
 	}
 
+	return servers;
 }

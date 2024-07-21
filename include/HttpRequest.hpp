@@ -23,6 +23,7 @@ class HttpRequest {
 		std::string http_version;
 		std::map<std::string, std::string> headers;
 		std::string body;
+		size_t		content_length;
 };
 
 class HttpRequestParser {
