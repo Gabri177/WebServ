@@ -304,19 +304,38 @@ HttpResponse::HttpResponse(const HttpRequest & request, int clt_fd): http_versio
 			is_find = true;
 			break ;
 		}
-		
+
 		if ((*it)._ip == "0.0.0.0" && std::find((*it)._port.begin(), (*it)._port.end(), server_port) != (*it)._port.end()){
 			this->CurrentServerConfig = *it;
 			is_find = true;
 			break ;
 		}
 	}
+
+	if (request.headers.find("Host") != request.headers.end()){
+
+		std::string		name = request.headers.find("Host")->second;
+		if (name.find(':') == std::string::npos){
+			
+			for (t_config_it it = g_config.begin(); it != g_config.end(); it ++){
+
+				if ((*it)._name == name && is_find == true){
+					this->CurrentServerConfig = *it;
+					break ;
+				}
+			}
+			this->CurrentServerConfig = g_config[0];
+		}
+	}
+
 	if (!is_find){
 
 		std::cout << "Could not find the current server ip for the request!!!!" << std::endl;
         Default404Set(request);
         return;
 	}
+
+
 
 	if (sizeof(request.body) > CurrentServerConfig._client_size){
 
