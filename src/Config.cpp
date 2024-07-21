@@ -75,8 +75,10 @@ LocationConfig								parseLocation(const std::string & content){
 			std::string	 stats;
 			iss_line >> stats;
 
-			if (stats == "on")
+			if (stats == "on"){
 				loc._autoindex = true;
+				//std::cout <<  loc._root <<"    auto index on ..." << std::endl;
+			}
 			else if (stats == "off")
 				loc._autoindex = false;
 		}else if (FWord == "index"){
@@ -84,6 +86,7 @@ LocationConfig								parseLocation(const std::string & content){
 			std::string  path;
 			iss_line >> path;
 			loc._index = path;
+			//std::cout <<  loc._root << "       loc:index ==>" << path << std::endl;
 		}else if (FWord == "root"){
 
 			std::string root;

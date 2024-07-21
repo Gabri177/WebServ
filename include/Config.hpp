@@ -19,6 +19,16 @@ struct LocationConfig {
     std::string                             _index;
     std::map<int, std::string>              _err_page;
     std::string                             _return_url;
+
+    LocationConfig(){
+
+        _root = "";
+        _client_size = 0;
+        _autoindex = false;
+        _cgi = "";
+        _index = "";
+        _return_url = "";
+    }
 };
 
 struct ServerConfig {
