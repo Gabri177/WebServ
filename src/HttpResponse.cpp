@@ -318,13 +318,53 @@ void					HttpResponse::handlePost(const HttpRequest & request){
 	}
 }
 
-// void					HttpResponse::handleDelete(const HttpRequest & request){
+void					HttpResponse::handleDelete(const HttpRequest & request){
 
-// 	// if (loadFileContent(request.url, "DELETE") == "") {
-// 	// 	Default404Set(request);
-// 	// 	return;
-// 	// }
-// }
+	std::cout << "DELETE: start to solve the DELETE request..." << std::endl;
+
+	std::string	cur_url = urlToFilePath(request.url, "DELETE");
+
+	std::cout << "DELETE: absolute path -> \"" << cur_url << "\"" << std::endl; 
+
+	struct stat file_info;
+
+	if (stat(cur_url.c_str(), &file_info) != 0){
+
+		std::cout << "DELETE: file does not exist..." << std::endl;
+		Default404Set(request);
+		return ;
+	}
+
+	if (remove(cur_url.c_str()) == 0){
+
+		std::cout << "DELETE: file deleted successfully..." << std::endl;
+        body = "<html><body><h1>File Deleted</h1></body></html>";
+        status_code = OK;
+        status_text = RES_STATUS_OK;
+        headers[CONTENT_TYPE] = "text/html; charset=UTF-8";
+		std::stringstream ss;
+		ss << body.size();
+        headers[CONTENT_LENGTH] = ss.str();
+        headers[CONTENT_SERVER] = "MyServer/1.0";
+        headers[CONTENT_DATE] = getHttpDate();
+        headers[CONTENT_CONNECTION] = "keep-alive";
+	}else {
+
+        std::cout << "DELETE: file could not be deleted..." << std::endl;
+        status_code = INTERNAL_SERVER_ERROR;
+        status_text = "Internal Server Error";
+        body = "<html><body><h1>500 Internal Server Error</h1></body></html>";
+        headers[CONTENT_TYPE] = "text/html; charset=UTF-8";
+        std::stringstream ss;
+		ss << body.size();
+        headers[CONTENT_LENGTH] = ss.str();
+        headers[CONTENT_SERVER] = "MyServer/1.0";
+        headers[CONTENT_DATE] = getHttpDate();
+        headers[CONTENT_CONNECTION] = "keep-alive";
+    }
+
+	
+}
 
 
 HttpResponse::HttpResponse(const HttpRequest & request, int clt_fd): http_version(request.http_version){
@@ -404,8 +444,8 @@ HttpResponse::HttpResponse(const HttpRequest & request, int clt_fd): http_versio
 	else if (request.method == "POST")
 		handlePost(request);
 	else if (request.method == "DELETE")
-		std::cout << "Un finish DELETE method!!!" << std::endl;
-		//handleDelete(request);
+		//std::cout << "Un finish DELETE method!!!" << std::endl;
+		handleDelete(request);
 	else
 		Default404Set(request);
 }
