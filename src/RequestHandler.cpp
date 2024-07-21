@@ -6,7 +6,7 @@
 /*   By: pabpalma <pabpalma>                        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/20 12:38:18 by pabpalma          #+#    #+#             */
-/*   Updated: 2024/07/20 12:39:48 by pabpalma         ###   ########.fr       */
+/*   Updated: 2024/07/21 20:24:48 by pabpalma         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,7 +32,8 @@ void handle_client_request(int client_fd) {
     if (!request_buffer.empty()) {
         std::string request_str(request_buffer.begin(), request_buffer.end());
         HttpRequestParser parser;
-        HttpRequest request = parser.parse(request_str);
+        HttpRequest request;
+		parser.feed(request_str.c_str(), request_str.size(), request);
         
         // Debug output for the parsed request
         std::cout << "Method: " << request.method << std::endl;
