@@ -9,11 +9,11 @@
 # include <sys/stat.h>
 # include <sys/types.h>
 # include <unistd.h>
-# define CONTENT_TYPE "Content-Type: "
+# define CONTENT_TYPE "Content-Type"
 # define CONTENT_LENGTH "Content-Length"
-# define CONTENT_SERVER "Server: "
-# define CONTENT_DATE "Date: "
-# define CONTENT_CONNECTION "Connection: "
+# define CONTENT_SERVER "Server"
+# define CONTENT_DATE "Date"
+# define CONTENT_CONNECTION "Connection"
 # define RES_STATUS_OK "OK"
 # define RES_STATUS_NOT_FOUND "Not Found"
 # define RES_STATUS_CREATED "Created"
