@@ -7,10 +7,9 @@ static std::string										str_no_space(const std::string & ori){
 		return	ori;
 	size_t	end	  = ori.find_last_not_of(' ');
 	return ori.substr(start, end - start + 1);
-
 }
 
-static std::vector<int>				parse_port(const std::string & port_set){
+static std::vector<int>									parse_port(const std::string & port_set){
 
 	std::vector<int>	temp;
 	std::string			token;
@@ -26,7 +25,7 @@ static std::vector<int>				parse_port(const std::string & port_set){
 	return temp;
 }
 
-LocationConfig								parseLocation(const std::string & content){
+LocationConfig											parseLocation(const std::string & content){
 
 	LocationConfig				loc;
 	std::string					line;
@@ -37,28 +36,29 @@ LocationConfig								parseLocation(const std::string & content){
 		std::string				FWord;
 
 		iss_line >> FWord;
-		if (FWord == "client_size"){
+		if (FWord == LOC_CLIENT_SIZE){
 
 			long	len;
+
 			iss_line >> len;
 			loc._client_size = len;
-		}else if (FWord == "methods"){
+		}else if (FWord == LOC_METHODS){
 
 			std::string	 meth;
 			while(iss_line >> meth)
 				loc._methods.push_back(meth);
-		}else if (FWord == "cgi_pass"){
+		}else if (FWord == LOC_CGI_PASS){
 
 			std::string	 path;
+
 			iss_line >> path;
 			loc._cgi = path;
-		}else if (FWord == "error_page"){
+		}else if (FWord == LOC_ERROR_PAGE){
 
 			std::string	 i;
 			std::string	 path;
 
 			iss_line >> i >> path;
-
 			if (i == "400")
 				loc._err_page[400] = path;
 			else if (i == "405")
@@ -68,28 +68,28 @@ LocationConfig								parseLocation(const std::string & content){
 		}else if (FWord == "return"){
 
 			std::string  path;
+
 			iss_line >> path;
 			loc._return_url = path;
-		}else if (FWord == "autoindex"){
+		}else if (FWord == LOC_AUTOINDEX){
 
 			std::string	 stats;
-			iss_line >> stats;
 
-			if (stats == "on"){
+			iss_line >> stats;
+			if (stats == "on")
 				loc._autoindex = true;
-				//std::cout <<  loc._root <<"    auto index on ..." << std::endl;
-			}
 			else if (stats == "off")
 				loc._autoindex = false;
-		}else if (FWord == "index"){
+		}else if (FWord == LOC_INDEX){
 
 			std::string  path;
+
 			iss_line >> path;
 			loc._index = path;
-			//std::cout <<  loc._root << "       loc:index ==>" << path << std::endl;
-		}else if (FWord == "root"){
+		}else if (FWord == LOC_ROOT){
 
 			std::string root;
+			
 			iss_line >> root;
 			loc._root = root;
 		}
@@ -97,7 +97,7 @@ LocationConfig								parseLocation(const std::string & content){
 	return loc;
 }
  
-std::vector<ServerConfig>                    Config::parseConfig(const std::string & filename){
+std::vector<ServerConfig>                    			Config::parseConfig(const std::string & filename){
 
     std::ifstream               file(filename.c_str());
     if (!file.is_open())
@@ -112,87 +112,73 @@ std::vector<ServerConfig>                    Config::parseConfig(const std::stri
         std::string 			FWord;
 		std::string				SWord;
         iss >> FWord >> SWord;
-		// std::cout << "line: " << line << std::endl;
-		// std::cout << std::endl << "             FWord: " << FWord << std::endl << std::endl;
 
-        if (FWord == "server"){
+        if (FWord == SERV_KEY_WORD){
 
             if (!serverConfig._ip.empty()){
 
-				// for (std::vector<std::string>::iterator it = serverConfig._methods.begin(); it != serverConfig._methods.end(); it ++)
-				// 	std::cout << *it << " " ;
-				// std::cout << std::endl;
                 servers.push_back(serverConfig);
                 serverConfig = ServerConfig();
             }
-			
-        }else if (FWord == "listen"){
+        }else if (FWord == SERV_LISTEN){
 
             std::string  cur_ip;
 			size_t				start = SWord.find_first_of(':');
 			if (start == std::string::npos)
 				throw std::runtime_error("Error: wrong format in ip and port set!!!");
             cur_ip = str_no_space(SWord.substr(0, start));
-			//std::cout << "CURRRRRIP : "  << cur_ip << std::endl;
-            if (cur_ip == "localhost")
+            if (cur_ip == SERV_LOCALHOST)
 			    serverConfig._ip = "0.0.0.0";
             else
                 serverConfig._ip = cur_ip;
 			serverConfig._port = parse_port(SWord.substr(start + 1));
-			// for (std::vector<int>::iterator it = serverConfig._port.begin(); it != serverConfig._port.end(); it ++)
-			// 	std::cout << "  " << *it;
-			// std::cout << std::endl;
-		}else if (FWord == "server_name")
+			
+		}else if (FWord == SERV_NAME){
+
 			serverConfig._name = SWord;		
-		else if (FWord == "root")
+		}else if (FWord == SERV_ROOT){
+
 			serverConfig._root = SWord;
-		else if (FWord == "index")
+		}else if (FWord == SERV_INDEX){
+
 			serverConfig._index = SWord;
-		else if (FWord == "methods"){
+		}else if (FWord == SERV_METHODS){
 
 			serverConfig._methods.push_back(SWord);
 			while(iss >> SWord)
 				serverConfig._methods.push_back(SWord);
-		}else if (FWord == "error_page"){
+		}else if (FWord == SERV_ERROR_PAGE){
 			
 			std::string			temp;
 			if (!(iss >> temp))
 				throw std::runtime_error ("Error: wrong format of err_page set!!!");
-			//std::cout << temp << "==" << std::endl;
 			if (SWord == "400")
 				serverConfig._err_page[400] = temp;
 			else if (SWord == "405")
 				serverConfig._err_page[405] = temp;
 			else if (SWord == "404")
 				serverConfig._err_page[404] = temp;
-		}else if (FWord == "client_size"){
+		}else if (FWord == SERV_CLIENT_SIZE){
 
 			char *end;
 			size_t len = std::strtol(SWord.c_str(), &end, 10);
 			if (*end != '\0')
 				throw std::runtime_error("Error: wrong format for the client_size!!!");
 			serverConfig._client_size = len;
-			//std::cout << "size_client: " << len << std::endl;
-		}else if (FWord == "location"){
+		}else if (FWord == SERV_LOCATION){
 
 			if (serverConfig._ip.empty())
 				throw std::runtime_error("Error: wrong format en the server setting, missing info!!!");
 
             std::getline(file, line, '}');
-			//std::cout << "read content: \"" << line << "\"" << std::endl;
             serverConfig._location[SWord] = parseLocation(line);
         }else {
            //parseServer(iss, serverConfig);
         }
 
     }
-
-    if (!serverConfig._ip.empty()){
-		// for (std::vector<std::string>::iterator it = serverConfig._methods.begin(); it != serverConfig._methods.end(); it ++)
-		// 	std::cout << *it << " " ;
-		// std::cout << std::endl;
+    if (!serverConfig._ip.empty())
         servers.push_back(serverConfig);
-	}
 
 	return servers;
 }

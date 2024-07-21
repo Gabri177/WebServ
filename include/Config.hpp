@@ -8,6 +8,26 @@
 # include <string>
 # include <cstdlib>
 # include <fstream>
+//location
+# define LOC_CLIENT_SIZE "client_size"
+# define LOC_METHODS "methods"
+# define LOC_CGI_PASS "cgi_pass"
+# define LOC_ERROR_PAGE "error_page"
+# define LOC_RETURN "return"
+# define LOC_AUTOINDEX "autoindex"
+# define LOC_INDEX "index"
+# define LOC_ROOT "root"
+//server
+# define SERV_KEY_WORD "server"
+# define SERV_LISTEN "listen"
+# define SERV_LOCALHOST "localhost"
+# define SERV_NAME "server_name"
+# define SERV_ROOT "root"
+# define SERV_INDEX "index"
+# define SERV_METHODS "methods"
+# define SERV_ERROR_PAGE "error_page"
+# define SERV_LOCATION "location"
+# define SERV_CLIENT_SIZE "client_size"
 
 struct LocationConfig {
 
