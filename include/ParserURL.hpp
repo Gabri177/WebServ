@@ -6,15 +6,18 @@
 # include <iostream>
 # include <sstream>
 
-template <typename T, typename B>
+
 class ParserURL {
 
 	public:
 
-		static std::map<T, B>				get_url_key_val(const std::string & oriurl){
+		typedef std::map<std::string, std::string>				t_str_keyval_map;
+		typedef t_str_keyval_map::iterator						t_str_keyval_map_it;
 
-			std::map<T, B>	temp;
-			size_t			p_question_mark = oriurl.find('?');
+		static t_str_keyval_map									get_url_key_val(const std::string & oriurl){
+
+			t_str_keyval_map	temp;
+			size_t				p_question_mark = oriurl.find('?');
 			if (p_question_mark == std::string::npos)
 				return temp;
 			std::string		cur_url = oriurl.substr(p_question_mark + 1);
