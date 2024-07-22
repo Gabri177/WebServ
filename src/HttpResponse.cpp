@@ -172,14 +172,14 @@ static std::string			getHttpDate(){
 std::string					HttpResponse::loadFileContent(const std::string & url, const std::string & meth){
 
 
-	std::ifstream	file(ParserURL::get_abs_url(url, CurrentServerConfig, meth));
-	std::cout << "loadFileContent: absolute path: \"" << ParserURL::get_abs_url(url, CurrentServerConfig, meth) << "\"" << std::endl;
+	std::ifstream	file(ParserURL::get_abs_url(url, CurrentServerConfig, meth).c_str());
+	//std::cout << "loadFileContent: absolute path: \"" << ParserURL::get_abs_url(url, CurrentServerConfig, meth) << "\"" << std::endl;
 	if (file.is_open()){
 
-		std::cout << "loadFileContent: file opend successfully..." << std::endl;
+		//std::cout << "loadFileContent: file opend successfully..." << std::endl;
 		std::stringstream	buffer;
 		buffer << file.rdbuf();
-		std::cout << "loadFileContent: file content: \"" << buffer.str() << "\"" << std::endl;
+		//std::cout << "loadFileContent: file content: \"" << buffer.str() << "\"" << std::endl;
 		return buffer.str();
 	}else{
 		return "";
@@ -462,10 +462,10 @@ void								HttpResponse::defaultErrPageSet(const HttpRequest & request, t_statu
 		std::string path;
 
 		if (CurrentServerConfig._root != "/")
-			path = CurrentServerConfig._root + CurrentServerConfig._err_page[page_code];
+			path = CurrentServerConfig._root + "/" + CurrentServerConfig._err_page[page_code];
 		else
-			path = CurrentServerConfig._err_page[page_code];
-		std::ifstream	file(path);
+			path = "/" + CurrentServerConfig._err_page[page_code];
+		std::ifstream	file(path.c_str());
 		if (file.is_open()){
 			
 			std::stringstream	buffer;
@@ -473,17 +473,21 @@ void								HttpResponse::defaultErrPageSet(const HttpRequest & request, t_statu
 			body = buffer.str();
 		}else{
 
-			std::istringstream iss(page_code);
-			body = "<html><body><h1> Default page. Error code:" + iss.str() + "</h1></body></html>";
+			std::stringstream ss;
+			ss << page_code;
+			body = "<html><body><h1> Default page. Error code:" + ss.str() + "</h1></body></html>";
 		}
-		std::ostringstream ss;
-		ss << body.size();
-		headers[CONTENT_LENGTH] = ss.str();
+		std::ostringstream ss_size;
+		ss_size << body.size();
+		headers[CONTENT_LENGTH] = ss_size.str();
 	}else{
 
-		std::istringstream iss(page_code);
-		body = "<html><body><h1> Default page. Error code:" + iss.str() + "</h1></body></html>";
-        headers["Content-Length"] = std::to_string(body.size());
+		std::stringstream ss;
+		ss << page_code;
+		body = "<html><body><h1> Default page. Error code:" + ss.str() + "</h1></body></html>";
+        std::ostringstream ss_size;
+		ss_size << body.size();
+		headers[CONTENT_LENGTH] = ss_size.str();
 	}
 }
 

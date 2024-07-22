@@ -42,7 +42,7 @@ t_str_keyval_map										ParserURL::get_url_key_val(const std::string & oriurl)
 
 const std::string										ParserURL::get_abs_url(std::string oriurl, const ServerConfig & curserv, const std::string & meth){
 
-	std::cout << "PARSERURL: oriurl==>\"" << oriurl << "\"" << std::endl;
+	//std::cout << "PARSERURL: oriurl==>\"" << oriurl << "\"" << std::endl;
 	t_str_vec			methods;
 	bool				is_access = false;
 	size_t				p_question_mark = oriurl.find('?');

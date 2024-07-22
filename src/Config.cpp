@@ -177,8 +177,9 @@ std::vector<ServerConfig>                    			Config::parseConfig(const std::s
         }
 
     }
-    if (!serverConfig._ip.empty())
+    if (!serverConfig._ip.empty()){
         servers.push_back(serverConfig);
+	}
 
 	return servers;
 }

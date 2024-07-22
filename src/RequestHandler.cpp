@@ -55,18 +55,22 @@ void handle_client_request(int client_fd) {
         memset(&buffer, 0, sizeof(buffer));
         if (request.content_length > 0) {
             size_t total_length = request_str.size() + request.content_length;
-            while (request_buffer.size() < total_length) {
-                bytes_read = recv(client_fd, buffer, 1, 0);
-                if (bytes_read <= 0) {
-                    break;
+            try{
+                while (request_buffer.size() < total_length) {
+                    bytes_read = recv(client_fd, buffer, 1, 0);
+                    request_buffer.insert(request_buffer.end(), buffer, buffer + bytes_read);
+                    if (bytes_read <= 0) {
+                        break;
+                    }
                 }
-                request_buffer.insert(request_buffer.end(), buffer, buffer + bytes_read);
+            }catch (const std::exception & e){
+            //std::cout << "here errrrrrror\n";
             }
             // Update the request body with the newly read data
             if (request_buffer.size() > request_str.size()) {
                 request.body = std::string(request_buffer.begin() + request_str.size(), request_buffer.end());
             }
-            std::cout << "Request body:\n|||||||||||||||||||||||||||||" << request.body << "||||||||||||||||||||||||"<< std::endl;
+            std::cout << "Request body:\n|||||||||||||||||||||||||||||\"" << request.body << "\"|||||||||||||||||||||||||||||"<< std::endl;
         }
 
         
@@ -74,9 +78,9 @@ void handle_client_request(int client_fd) {
         // std::cout << "Method: " << request.method << std::endl;
         // std::cout << "URL: " << request.url << std::endl;
         // std::cout << "HTTP Version: " << request.http_version << std::endl;
-        for (std::map<std::string, std::string>::iterator it = request.headers.begin(); it != request.headers.end(); ++it) {
-            std::cout << "Header: " << it->first << " = " << it->second << std::endl;
-        }
+        //for (std::map<std::string, std::string>::iterator it = request.headers.begin(); it != request.headers.end(); ++it) {
+        //    std::cout << "Header: " << it->first << " = " << it->second << std::endl;
+        //}
         //std::cout << "Body: \"" << request.body << "\""<< std::endl;
 
         // Simple HTTP response
