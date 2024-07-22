@@ -1,6 +1,6 @@
 #include "../include/HttpResponse.hpp"
 
-std::string getContentType(const std::string& file_extension){
+std::string 				getContentType(const std::string& file_extension){
 
     static std::map<std::string, std::string> content_types;
 	if (content_types.empty()){
@@ -32,7 +32,7 @@ std::string getContentType(const std::string& file_extension){
     return "application/octet-stream";
 }
 
-std::string determineContentType(const std::string& filepath){
+std::string 				determineContentType(const std::string& filepath){
 	
     size_t dot_pos = filepath.find_last_of(".");
     if (dot_pos == std::string::npos)
@@ -65,16 +65,24 @@ std::string determineContentType(const std::string& filepath){
 // 	return is_exist;
 // }
 
-static bool					is_exist_404(){
+// static bool					is_exist_404(){
+
+// 	bool	is_exist = false;
+// 	for (t_config_it it = g_config.begin(); it != g_config.end(); it ++){
+
+// 		if (!(*it)._err_page.empty() && (*it)._err_page.find(404) != (*it)._err_page.end()){
+// 			is_exist = true;
+// 			break;
+// 		}
+// 	}
+// 	return is_exist;
+// }
+
+bool						HttpResponse::is_exist_err_page(t_status_respond page_num){
 
 	bool	is_exist = false;
-	for (t_config_it it = g_config.begin(); it != g_config.end(); it ++){
-
-		if (!(*it)._err_page.empty() && (*it)._err_page.find(404) != (*it)._err_page.end()){
-			is_exist = true;
-			break;
-		}
-	}
+	if (!CurrentServerConfig._err_page.empty() && CurrentServerConfig._err_page.find(page_num) != CurrentServerConfig._err_page.end())
+		is_exist = true;
 	return is_exist;
 }
 
@@ -187,7 +195,7 @@ void						HttpResponse::handleGet(const HttpRequest & request){
 		body = loadFileContent(request.url, "GET");
 		//std::cout << "GET:: BODY :" << body << std::endl;
 		if (body == "") {
-			Default404Set(request);
+			defaultErrPageSet(request, NOT_FOUND);
 			return;
 		}
 		status_code = OK;
@@ -214,7 +222,7 @@ void						HttpResponse::handlePost(const HttpRequest & request){
 	if (path == "" || request.headers.find("Content-Type") == request.headers.end()) {
 
 		std::cout << "POST: could not find Content-Type..." << std::endl;
-		Default404Set(request);
+		defaultErrPageSet(request, NOT_FOUND);
 		return;
 	}
 	std::map<std::string, std::string>::const_iterator it = request.headers.find("Content-Type");
@@ -223,7 +231,7 @@ void						HttpResponse::handlePost(const HttpRequest & request){
 	if (content_type.find("multipart/form-data") == std::string::npos) {
 
         std::cout << "POST: Content-Type is not multipart/form-data..." << std::endl;
-        Default404Set(request);
+        defaultErrPageSet(request, NOT_FOUND);
         return;
     }
 	std::string boundary = "--" + content_type.substr(content_type.find("boundary=") + 9);
@@ -271,16 +279,17 @@ void						HttpResponse::handlePost(const HttpRequest & request){
                 } else {
 
 					std::cout << "POST:  File can not open." << std::endl;
-                    status_code = INTERNAL_SERVER_ERROR;
-                    status_text = "Internal Server Error";
-                    body = "<html><body><h1>500 Internal Server Error</h1></body></html>";
-                    headers[CONTENT_TYPE] = "text/html; charset=UTF-8";
-                    std::stringstream ss;
-                    ss << body.size();
-                    headers[CONTENT_LENGTH] = ss.str();
-                    headers[CONTENT_SERVER] = "MyServer/1.0";
-                    headers[CONTENT_DATE] = getHttpDate();
-                    headers[CONTENT_CONNECTION] = "keep-alive";
+					defaultErrPageSet(request, INTERNAL_SERVER_ERROR);
+                    // status_code = INTERNAL_SERVER_ERROR;
+                    // status_text = "Internal Server Error";
+                    // body = "<html><body><h1>500 Internal Server Error</h1></body></html>";
+                    // headers[CONTENT_TYPE] = "text/html; charset=UTF-8";
+                    // std::stringstream ss;
+                    // ss << body.size();
+                    // headers[CONTENT_LENGTH] = ss.str();
+                    // headers[CONTENT_SERVER] = "MyServer/1.0";
+                    // headers[CONTENT_DATE] = getHttpDate();
+                    // headers[CONTENT_CONNECTION] = "keep-alive";
                     return;
                 }
             }
@@ -303,7 +312,7 @@ void						HttpResponse::handleDelete(const HttpRequest & request){
 	if (stat(cur_url.c_str(), &file_info) != 0){
 
 		std::cout << "DELETE: file does not exist..." << std::endl;
-		Default404Set(request);
+		defaultErrPageSet(request, NOT_FOUND);
 		return ;
 	}
 
@@ -347,7 +356,7 @@ HttpResponse::HttpResponse(const HttpRequest & request, int clt_fd): http_versio
     if (getsockname(clt_fd, (struct sockaddr*)&server_addr, &server_addr_len) == -1) {
         
 		std::cout << "Could not find the current server ip for the request!!!!" << std::endl;
-        Default404Set(request);
+        defaultErrPageSet(request, NOT_FOUND);
         return;
     }
     std::string server_ip = inet_ntoa(server_addr.sin_addr);
@@ -390,7 +399,7 @@ HttpResponse::HttpResponse(const HttpRequest & request, int clt_fd): http_versio
 	if (!is_find){
 
 		std::cout << "Could not find the current server ip for the request!!!!" << std::endl;
-        Default404Set(request);
+        defaultErrPageSet(request, NOT_FOUND);
         return;
 	}
 
@@ -399,7 +408,7 @@ HttpResponse::HttpResponse(const HttpRequest & request, int clt_fd): http_versio
 	if (sizeof(request.body) > CurrentServerConfig._client_size){
 
 		std::cout << "Client body size is too large!!!" << std::endl;
-        Default404Set(request);
+        defaultErrPageSet(request, INTERNAL_SERVER_ERROR);
         return;
 	}
 
@@ -411,7 +420,7 @@ HttpResponse::HttpResponse(const HttpRequest & request, int clt_fd): http_versio
 	if (test_path == ""){
 
 		std::cout << "No pass the url test, do not exist!!!" << std::endl;
-        Default404Set(request);
+        defaultErrPageSet(request, NOT_FOUND);
         return;
     }
 
@@ -423,55 +432,107 @@ HttpResponse::HttpResponse(const HttpRequest & request, int clt_fd): http_versio
 		//std::cout << "Un finish DELETE method!!!" << std::endl;
 		handleDelete(request);
 	else
-		Default404Set(request);
+		defaultErrPageSet(request, NOT_FOUND);
 }
 
-void								HttpResponse::Default404Set(const HttpRequest & request){
+void								HttpResponse::defaultErrPageSet(const HttpRequest & request, t_status_respond page_code){
 
 	http_version = request.http_version;
-	status_code = NOT_FOUND;
-	status_text = RES_STATUS_NOT_FOUND;
+	status_code = page_code;
 	headers[CONTENT_DATE] = getHttpDate();
 	headers[CONTENT_SERVER] = "MyServer/1.0";
 	headers[CONTENT_TYPE] = "text/html; charset=UTF-8";
-	
-	bool is_err_page = is_exist_404();
-	//std::cout << "here1" << std::endl;
-	if (is_err_page){
+	switch (page_code)
+	{
+		case OK:
+			status_text = RES_STATUS_OK;
+			break;
+		case NOT_FOUND:
+			status_text = RES_STATUS_NOT_FOUND;
+			break;
+		case INTERNAL_SERVER_ERROR:
+			status_text = RES_STATUS_CREATED;
+			break;
+		default:
+			break;
+	}
 
-		//std::cout << "here2" << std::endl;
-        for (t_config_it it = g_config.begin(); it != g_config.end(); it++) {
+	if (is_exist_err_page(page_code)){
 
-            if ((*it)._err_page.find(404) != (*it)._err_page.end()){
+		std::string path;
 
-				std::string path;
-				if ((*it)._root != "/")
-					path = (*it)._root + (*it)._err_page[404];
-				else
-					path = (*it)._err_page[404];
-				//std::cout << "ERR PAGE PATH:\"" << path << "\"" << std::endl;
-				std::ifstream	file(path);
-				if (file.is_open()){
-					
-					//std::cout << "OPENED DDDDDDDDDDDDDDDDDDDDDDDDDD" << std::endl;
-					std::stringstream	buffer;
-					buffer << file.rdbuf();
-					body = buffer.str();
-				}else
-                	body = "Default Error!";
-				std::ostringstream ss;
-                ss << body.size();
-                headers[CONTENT_LENGTH] = ss.str();
-                return ;
-			}
+		if (CurrentServerConfig._root != "/")
+			path = CurrentServerConfig._root + CurrentServerConfig._err_page[page_code];
+		else
+			path = CurrentServerConfig._err_page[page_code];
+		std::ifstream	file(path);
+		if (file.is_open()){
+			
+			std::stringstream	buffer;
+			buffer << file.rdbuf();
+			body = buffer.str();
+		}else{
+
+			std::istringstream iss(page_code);
+			body = "<html><body><h1> Default page. Error code:" + iss.str() + "</h1></body></html>";
 		}
-    }else{
+		std::ostringstream ss;
+		ss << body.size();
+		headers[CONTENT_LENGTH] = ss.str();
+	}else{
 
-		//std::cout << "here3" << std::endl;
-        body = "<html><body><h1>404 Not Found</h1></body></html>";
+		std::istringstream iss(page_code);
+		body = "<html><body><h1> Default page. Error code:" + iss.str() + "</h1></body></html>";
         headers["Content-Length"] = std::to_string(body.size());
-    }
+	}
 }
+
+// void								HttpResponse::Default404Set(const HttpRequest & request){
+
+// 	http_version = request.http_version;
+// 	status_code = NOT_FOUND;
+// 	status_text = RES_STATUS_NOT_FOUND;
+// 	headers[CONTENT_DATE] = getHttpDate();
+// 	headers[CONTENT_SERVER] = "MyServer/1.0";
+// 	headers[CONTENT_TYPE] = "text/html; charset=UTF-8";
+	
+// 	bool is_err_page = is_exist_404();
+// 	//std::cout << "here1" << std::endl;
+// 	if (is_err_page){
+
+// 		//std::cout << "here2" << std::endl;
+//         for (t_config_it it = g_config.begin(); it != g_config.end(); it++) {
+
+//             if ((*it)._err_page.find(404) != (*it)._err_page.end()){
+
+// 				std::string path;
+// 				if ((*it)._root != "/")
+// 					path = (*it)._root + (*it)._err_page[404];
+// 				else
+// 					path = (*it)._err_page[404];
+// 				//std::cout << "ERR PAGE PATH:\"" << path << "\"" << std::endl;
+// 				std::ifstream	file(path);
+// 				if (file.is_open()){
+					
+// 					//std::cout << "OPENED DDDDDDDDDDDDDDDDDDDDDDDDDD" << std::endl;
+// 					std::stringstream	buffer;
+// 					buffer << file.rdbuf();
+// 					body = buffer.str();
+// 				}else
+//                 	body = "Default Error!";
+// 				std::ostringstream ss;
+//                 ss << body.size();
+//                 headers[CONTENT_LENGTH] = ss.str();
+//                 return ;
+// 			}
+// 		}
+//     }else{
+
+// 		//std::cout << "here3" << std::endl;
+//         body = "<html><body><h1>404 Not Found</h1></body></html>";
+//         headers["Content-Length"] = std::to_string(body.size());
+//     }
+// }
 
 std::string							HttpResponse::CreateResponse() {
 

@@ -42,7 +42,7 @@ t_str_keyval_map										ParserURL::get_url_key_val(const std::string & oriurl)
 
 const std::string										ParserURL::get_abs_url(std::string oriurl, const ServerConfig & curserv, const std::string & meth){
 
-	//std::cout << "PARSERURL: oriurl==>\"" << oriurl << "\"" << std::endl;
+	std::cout << "PARSERURL: oriurl==>\"" << oriurl << "\"" << std::endl;
 	t_str_vec			methods;
 	bool				is_access = false;
 	size_t				p_question_mark = oriurl.find('?');
@@ -53,41 +53,47 @@ const std::string										ParserURL::get_abs_url(std::string oriurl, const Serv
 	size_t				p_file_mark = oriurl.find('.');
 	std::string			path;
 	std::string			filename;
+		
+
 	if (p_file_mark != std::string::npos){
 
 		is_file = true;
-		if (oriurl == "/")
+		//if (oriurl == "/")
 			path = oriurl.substr(0, oriurl.find_last_of('/') + 1);
-		else
-			path = oriurl.substr(0, oriurl.find_last_of('/'));
+		// else
+		// 	path = oriurl.substr(0, oriurl.find_last_of('/'));
 		filename = oriurl.substr(oriurl.find_last_of('/') + 1);
+		//std::cout << "has fileeeeeeeeeeeeeeeeeeeeeeeeeeeee\n\n";
 	}else
 		path = oriurl;
 
 	std::string			match_location_path = path;
 	int					path_grade = 0;
 	LocationConfig		temp_loc;
-	//std::cout << "PARSERURL: path=>>\"" << path << "\"" << std::endl;
+	// std::cout << "PARSERURL: path=>>\"" << path << "\"" << std::endl;
+	// std::cout << "PARSERURL: filename=>>\"" << filename << "\"" << std::endl;
 	for(t_location_it_const it = curserv._location.begin(); it != curserv._location.end(); it ++){
 
 		if (path.find(it->first) == 0 && count_occurrences(it->first, '/') >= path_grade){
 
+			match_location_path = path;
 			if (it->first != "/"){
 
-				match_location_path = path;
 				path_grade = count_occurrences(it->first, '/');
-				// std::cout << "\n\nPARSERURL: current_match_path ==>\"" << it->second._root << "\"" << std::endl;
-				// std::cout << "PARSERURL: current_match_first ==>\"" << it->first << "\"" << std::endl;
-				// std::cout << "PARSERURL: current_match_path ==>\"" << match_location_path << "\"\n\n" << std::endl;
+				// std::cout << "\n\n				PARSERURL: current_match_path ==>\"" << it->second._root << "\"" << std::endl;
+				// std::cout << "				PARSERURL: current_match_first ==>\"" << it->first << "\"" << std::endl;
+				// std::cout << "				PARSERURL: current_match_path ==>\"" << match_location_path << "\"\n\n" << std::endl;
 				replace_path(match_location_path, it->first, it->second._root);
-				//std::cout << "PARSERURL: switch_path results ==>\"" << match_location_path << "\"" << std::endl;
+				//std::cout << "				PARSERURL: switch_path results ==>\"" << match_location_path << "\"" << std::endl;
 				temp_loc = it->second;
-				//std::cout << "AUTOINDEX::::::::" << temp_loc._autoindex << std::endl;
+				//std::cout << "				AUTOINDEX::::::::" << temp_loc._autoindex << std::endl;
 				methods = it->second._methods;
 				break ;
 			}else{
 
-				match_location_path = it->second._root;
+				//match_location_path = it->second._root;
+				match_location_path = it->second._root + path;
+				//std::cout << "							PARSERURL: switch_path results ==>\"" << match_location_path << "\"" << std::endl;
 				methods = it->second._methods;
 				temp_loc = it->second;
 			}
