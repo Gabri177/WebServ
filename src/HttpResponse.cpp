@@ -1,6 +1,6 @@
 #include "../include/HttpResponse.hpp"
 
-std::string getContentType(const std::string& file_extension){
+std::string 				getContentType(const std::string& file_extension){
 
     static std::map<std::string, std::string> content_types;
 	if (content_types.empty()){
@@ -32,7 +32,7 @@ std::string getContentType(const std::string& file_extension){
     return "application/octet-stream";
 }
 
-std::string determineContentType(const std::string& filepath){
+std::string 				determineContentType(const std::string& filepath){
 	
     size_t dot_pos = filepath.find_last_of(".");
     if (dot_pos == std::string::npos)
@@ -42,39 +42,47 @@ std::string determineContentType(const std::string& filepath){
     return getContentType(file_extension);
 }
 
-static bool					is_exist_url(const std::string & url){
+// static bool					is_exist_url(const std::string & url){
 
 	
-	std::string url_path;
-	if (url.find('.') != std::string::npos)
-		url_path = url.substr(0, url.find_last_of('/'));
-	else
-		url_path = url;
-	if (url_path == "")
-		url_path = "/";
-	std::cout << "is_exist_url: the arg url_path: \"" << url_path << "\"" << std::endl;
+// 	std::string url_path;
+// 	if (url.find('.') != std::string::npos)
+// 		url_path = url.substr(0, url.find_last_of('/'));
+// 	else
+// 		url_path = url;
+// 	if (url_path == "")
+// 		url_path = "/";
+// 	std::cout << "is_exist_url: the arg url_path: \"" << url_path << "\"" << std::endl;
+// 	bool	is_exist = false;
+// 	for (t_config_it it = g_config.begin(); it != g_config.end(); it ++){
+
+// 		if (!(*it)._location.empty() && (*it)._location.find(url_path) != (*it)._location.end()){
+// 			is_exist = true;
+// 			std::cout << "is_exist_url: the arg \"" << url_path << "\"" << " exist!!!" << std::endl;
+// 			break;
+// 		}
+// 	}
+// 	return is_exist;
+// }
+
+// static bool					is_exist_404(){
+
+// 	bool	is_exist = false;
+// 	for (t_config_it it = g_config.begin(); it != g_config.end(); it ++){
+
+// 		if (!(*it)._err_page.empty() && (*it)._err_page.find(404) != (*it)._err_page.end()){
+// 			is_exist = true;
+// 			break;
+// 		}
+// 	}
+// 	return is_exist;
+// }
+
+bool						HttpResponse::is_exist_err_page(t_status_respond page_num){
+
 	bool	is_exist = false;
-	for (t_config_it it = g_config.begin(); it != g_config.end(); it ++){
-
-		if (!(*it)._location.empty() && (*it)._location.find(url_path) != (*it)._location.end()){
-			is_exist = true;
-			std::cout << "is_exist_url: the arg \"" << url_path << "\"" << " exist!!!" << std::endl;
-			break;
-		}
-	}
-	return is_exist;
-}
-
-static bool					is_exist_404(){
-
-	bool	is_exist = false;
-	for (t_config_it it = g_config.begin(); it != g_config.end(); it ++){
-
-		if (!(*it)._err_page.empty() && (*it)._err_page.find(404) != (*it)._err_page.end()){
-			is_exist = true;
-			break;
-		}
-	}
+	if (!CurrentServerConfig._err_page.empty() && CurrentServerConfig._err_page.find(page_num) != CurrentServerConfig._err_page.end())
+		is_exist = true;
 	return is_exist;
 }
 
@@ -87,84 +95,85 @@ static std::string			getHttpDate(){
 	return std::string(buffer);
 }
 
-std::string					HttpResponse::urlToFilePath(const std::string & url, const std::string & meth){
+// std::string					HttpResponse::urlToFilePath(const std::string & url, const std::string & meth){
 
-	//std::cout << "find url:   " << url << std::endl;
-	bool		is_file = false;
-	std::string url_path;
-	if (url.find('.') != std::string::npos){
+// 	//std::cout << "find url:   " << url << std::endl;
+// 	bool		is_file = false;
+// 	std::string url_path;
+// 	if (url.find('.') != std::string::npos){
 
-		url_path = url.substr(0, url.find_last_of('/'));
-		is_file = true;
-	} else
-		url_path = url;
+// 		url_path = url.substr(0, url.find_last_of('/'));
+// 		is_file = true;
+// 	} else
+// 		url_path = url;
 
-	if (url_path == "")
-		url_path = "/";
+// 	if (url_path == "")
+// 		url_path = "/";
 
-	//std::cout << "\n\n URL_PATH:    " << url_path << std::endl;
-	//for (t_config_it it = g_config.begin(); it != g_config.end(); it ++){
-		if((CurrentServerConfig)._location.find(url_path) != (CurrentServerConfig)._location.end()){
-			if (!(CurrentServerConfig)._location[url_path]._root.empty() && std::find((CurrentServerConfig)._location[url_path]._methods.begin(), (CurrentServerConfig)._location[url_path]._methods.end(), meth) != (CurrentServerConfig)._location[url_path]._methods.end()){
+// 	//std::cout << "\n\n URL_PATH:    " << url_path << std::endl;
+// 	//for (t_config_it it = g_config.begin(); it != g_config.end(); it ++){
+// 		if((CurrentServerConfig)._location.find(url_path) != (CurrentServerConfig)._location.end()){
+// 			if (!(CurrentServerConfig)._location[url_path]._root.empty() && std::find((CurrentServerConfig)._location[url_path]._methods.begin(), (CurrentServerConfig)._location[url_path]._methods.end(), meth) != (CurrentServerConfig)._location[url_path]._methods.end()){
 				
-				// if (CurrentServerConfig._location[url_path]._autoindex)
-				// 	std::cout << "TRUEEEEEEEEE" << std::endl;
-				// else
-				// 	std::cout << "FALSEEEEEEEE" << std::endl;
-				if (is_file == true){
+// 				// if (CurrentServerConfig._location[url_path]._autoindex)
+// 				// 	std::cout << "TRUEEEEEEEEE" << std::endl;
+// 				// else
+// 				// 	std::cout << "FALSEEEEEEEE" << std::endl;
+// 				if (is_file == true){
 
-					//std::cout << "is file true :     " << (CurrentServerConfig)._location[url_path]._root + url << std::endl;
-					if ((CurrentServerConfig)._location[url_path]._root != "/")
-						return (CurrentServerConfig)._location[url_path]._root + url;
-					else
-						return url;
-				}else{
+// 					//std::cout << "is file true :     " << (CurrentServerConfig)._location[url_path]._root + url << std::endl;
+// 					if ((CurrentServerConfig)._location[url_path]._root != "/")
+// 						return (CurrentServerConfig)._location[url_path]._root + url;
+// 					else
+// 						return url;
+// 				}else{
 
-					//std::cout << "is file false :     " << CurrentServerConfig._location[url_path]._root + "/" + CurrentServerConfig._location[url_path]._index << std::endl;
-					// if (CurrentServerConfig._location[url_path]._autoindex == true)
-					// 	std::cout << "AUTOINDEX ONOOOOOOOOOO" << std::endl;
-					// else
-					// 	std::cout << "asdfasdfadsfasdfasdfa" << std::endl;
-					if (CurrentServerConfig._location[url_path]._autoindex == true)
-						if (url != "/")
-							return CurrentServerConfig._location[url_path]._root + url + "/" + CurrentServerConfig._location[url_path]._index;
-						else
-							return CurrentServerConfig._location[url_path]._root + "/" + CurrentServerConfig._location[url_path]._index;
-					else
-						if ((CurrentServerConfig)._location[url_path]._root != "/")
-							return (CurrentServerConfig)._location[url_path]._root + url;
-						else
-							return url;
-				}
+// 					//std::cout << "is file false :     " << CurrentServerConfig._location[url_path]._root + "/" + CurrentServerConfig._location[url_path]._index << std::endl;
+// 					// if (CurrentServerConfig._location[url_path]._autoindex == true)
+// 					// 	std::cout << "AUTOINDEX ONOOOOOOOOOO" << std::endl;
+// 					// else
+// 					// 	std::cout << "asdfasdfadsfasdfasdfa" << std::endl;
+// 					if (CurrentServerConfig._location[url_path]._autoindex == true)
+// 						if (url != "/")
+// 							return CurrentServerConfig._location[url_path]._root + url + "/" + CurrentServerConfig._location[url_path]._index;
+// 						else
+// 							return CurrentServerConfig._location[url_path]._root + "/" + CurrentServerConfig._location[url_path]._index;
+// 					else
+// 						if ((CurrentServerConfig)._location[url_path]._root != "/")
+// 							return (CurrentServerConfig)._location[url_path]._root + url;
+// 						else
+// 							return url;
+// 				}
 				
-			}
-		}
-	//}
+// 			}
+// 		}
+// 	//}
 
-	//for (t_config_it it = g_config.begin(); it != g_config.end(); it ++){
-		if (!(CurrentServerConfig)._root.empty() && std::find((CurrentServerConfig)._methods.begin(), (CurrentServerConfig)._methods.end(), meth) != (CurrentServerConfig)._methods.end()){
-			if (is_file){
-				if ((CurrentServerConfig)._root != "/"){
-					std::ifstream	file(url);
-					if (file.is_open())
-						return url;
-				} else {
-					std::ifstream	file(((CurrentServerConfig)._root + url));
-					if (file.is_open())
-						return (CurrentServerConfig)._root + url;
-				}
-			}else
-				return CurrentServerConfig._root + CurrentServerConfig._index;
-		}
-	//}
-	//std::cout << "no exist" << std::endl;
-	return url;
-}
+// 	//for (t_config_it it = g_config.begin(); it != g_config.end(); it ++){
+// 		if (!(CurrentServerConfig)._root.empty() && std::find((CurrentServerConfig)._methods.begin(), (CurrentServerConfig)._methods.end(), meth) != (CurrentServerConfig)._methods.end()){
+// 			if (is_file){
+// 				if ((CurrentServerConfig)._root != "/"){
+// 					std::ifstream	file(url);
+// 					if (file.is_open())
+// 						return url;
+// 				} else {
+// 					std::ifstream	file(((CurrentServerConfig)._root + url));
+// 					if (file.is_open())
+// 						return (CurrentServerConfig)._root + url;
+// 				}
+// 			}else
+// 				return CurrentServerConfig._root + CurrentServerConfig._index;
+// 		}
+// 	//}
+// 	//std::cout << "no exist" << std::endl;
+// 	return url;
+// }
 
 std::string					HttpResponse::loadFileContent(const std::string & url, const std::string & meth){
 
-	std::ifstream	file(urlToFilePath(url, meth));
-	std::cout << "loadFileContent: absolute path: \"" << urlToFilePath(url, meth) << "\"" << std::endl;
+
+	std::ifstream	file(ParserURL::get_abs_url(url, CurrentServerConfig, meth));
+	std::cout << "loadFileContent: absolute path: \"" << ParserURL::get_abs_url(url, CurrentServerConfig, meth) << "\"" << std::endl;
 	if (file.is_open()){
 
 		std::cout << "loadFileContent: file opend successfully..." << std::endl;
@@ -177,15 +186,16 @@ std::string					HttpResponse::loadFileContent(const std::string & url, const std
 	}
 }
 
-void					HttpResponse::handleGet(const HttpRequest & request){
+void						HttpResponse::handleGet(const HttpRequest & request){
 
 	try {
-		std::string cur_url = urlToFilePath(request.url, "GET");
+		//std::string cur_url = urlToFilePath(request.url, "GET");
+		std::string cur_url = ParserURL::get_abs_url(request.url, CurrentServerConfig, "GET");
 		std::cout << "handleGet: start do the GET request..." << std::endl;
 		body = loadFileContent(request.url, "GET");
 		//std::cout << "GET:: BODY :" << body << std::endl;
 		if (body == "") {
-			Default404Set(request);
+			defaultErrPageSet(request, NOT_FOUND);
 			return;
 		}
 		status_code = OK;
@@ -204,15 +214,15 @@ void					HttpResponse::handleGet(const HttpRequest & request){
 }
 
 
-void					HttpResponse::handlePost(const HttpRequest & request){
+void						HttpResponse::handlePost(const HttpRequest & request){
 
 	std::cout << "start do the POST request..." << std::endl;
-	std::string  path = urlToFilePath(request.url, "POST");
+	std::string  path = ParserURL::get_abs_url(request.url, CurrentServerConfig, "POST");
 	std::cout << "POST: path -> " << path << std::endl;
 	if (path == "" || request.headers.find("Content-Type") == request.headers.end()) {
 
 		std::cout << "POST: could not find Content-Type..." << std::endl;
-		Default404Set(request);
+		defaultErrPageSet(request, NOT_FOUND);
 		return;
 	}
 	std::map<std::string, std::string>::const_iterator it = request.headers.find("Content-Type");
@@ -221,7 +231,7 @@ void					HttpResponse::handlePost(const HttpRequest & request){
 	if (content_type.find("multipart/form-data") == std::string::npos) {
 
         std::cout << "POST: Content-Type is not multipart/form-data..." << std::endl;
-        Default404Set(request);
+        defaultErrPageSet(request, NOT_FOUND);
         return;
     }
 	std::string boundary = "--" + content_type.substr(content_type.find("boundary=") + 9);
@@ -269,16 +279,17 @@ void					HttpResponse::handlePost(const HttpRequest & request){
                 } else {
 
 					std::cout << "POST:  File can not open." << std::endl;
-                    status_code = INTERNAL_SERVER_ERROR;
-                    status_text = "Internal Server Error";
-                    body = "<html><body><h1>500 Internal Server Error</h1></body></html>";
-                    headers[CONTENT_TYPE] = "text/html; charset=UTF-8";
-                    std::stringstream ss;
-                    ss << body.size();
-                    headers[CONTENT_LENGTH] = ss.str();
-                    headers[CONTENT_SERVER] = "MyServer/1.0";
-                    headers[CONTENT_DATE] = getHttpDate();
-                    headers[CONTENT_CONNECTION] = "keep-alive";
+					defaultErrPageSet(request, INTERNAL_SERVER_ERROR);
+                    // status_code = INTERNAL_SERVER_ERROR;
+                    // status_text = "Internal Server Error";
+                    // body = "<html><body><h1>500 Internal Server Error</h1></body></html>";
+                    // headers[CONTENT_TYPE] = "text/html; charset=UTF-8";
+                    // std::stringstream ss;
+                    // ss << body.size();
+                    // headers[CONTENT_LENGTH] = ss.str();
+                    // headers[CONTENT_SERVER] = "MyServer/1.0";
+                    // headers[CONTENT_DATE] = getHttpDate();
+                    // headers[CONTENT_CONNECTION] = "keep-alive";
                     return;
                 }
             }
@@ -288,11 +299,11 @@ void					HttpResponse::handlePost(const HttpRequest & request){
 	}
 }
 
-void					HttpResponse::handleDelete(const HttpRequest & request){
+void						HttpResponse::handleDelete(const HttpRequest & request){
 
 	std::cout << "DELETE: start to solve the DELETE request..." << std::endl;
 
-	std::string	cur_url = urlToFilePath(request.url, "DELETE");
+	std::string	cur_url = ParserURL::get_abs_url(request.url, CurrentServerConfig, "DELETE");
 
 	std::cout << "DELETE: absolute path -> \"" << cur_url << "\"" << std::endl; 
 
@@ -301,7 +312,7 @@ void					HttpResponse::handleDelete(const HttpRequest & request){
 	if (stat(cur_url.c_str(), &file_info) != 0){
 
 		std::cout << "DELETE: file does not exist..." << std::endl;
-		Default404Set(request);
+		defaultErrPageSet(request, NOT_FOUND);
 		return ;
 	}
 
@@ -345,7 +356,7 @@ HttpResponse::HttpResponse(const HttpRequest & request, int clt_fd): http_versio
     if (getsockname(clt_fd, (struct sockaddr*)&server_addr, &server_addr_len) == -1) {
         
 		std::cout << "Could not find the current server ip for the request!!!!" << std::endl;
-        Default404Set(request);
+        defaultErrPageSet(request, NOT_FOUND);
         return;
     }
     std::string server_ip = inet_ntoa(server_addr.sin_addr);
@@ -388,7 +399,7 @@ HttpResponse::HttpResponse(const HttpRequest & request, int clt_fd): http_versio
 	if (!is_find){
 
 		std::cout << "Could not find the current server ip for the request!!!!" << std::endl;
-        Default404Set(request);
+        defaultErrPageSet(request, NOT_FOUND);
         return;
 	}
 
@@ -397,15 +408,19 @@ HttpResponse::HttpResponse(const HttpRequest & request, int clt_fd): http_versio
 	if (sizeof(request.body) > CurrentServerConfig._client_size){
 
 		std::cout << "Client body size is too large!!!" << std::endl;
-        Default404Set(request);
+        defaultErrPageSet(request, INTERNAL_SERVER_ERROR);
         return;
 	}
 
+
+	std::string     test_path = ParserURL::get_abs_url(request.url, CurrentServerConfig, "GET");
+	std::cout << "\n\nPARSERURL:   \"" << test_path << "\"\n" << std::endl;
+
 	// To see if exist the url in the configfile if no it will find the url (root + filename)
-	if (!is_exist_url(request.url)){
+	if (test_path == ""){
 
 		std::cout << "No pass the url test, do not exist!!!" << std::endl;
-        Default404Set(request);
+        defaultErrPageSet(request, NOT_FOUND);
         return;
     }
 
@@ -417,55 +432,107 @@ HttpResponse::HttpResponse(const HttpRequest & request, int clt_fd): http_versio
 		//std::cout << "Un finish DELETE method!!!" << std::endl;
 		handleDelete(request);
 	else
-		Default404Set(request);
+		defaultErrPageSet(request, NOT_FOUND);
 }
 
-void								HttpResponse::Default404Set(const HttpRequest & request){
+void								HttpResponse::defaultErrPageSet(const HttpRequest & request, t_status_respond page_code){
 
 	http_version = request.http_version;
-	status_code = NOT_FOUND;
-	status_text = RES_STATUS_NOT_FOUND;
+	status_code = page_code;
 	headers[CONTENT_DATE] = getHttpDate();
 	headers[CONTENT_SERVER] = "MyServer/1.0";
 	headers[CONTENT_TYPE] = "text/html; charset=UTF-8";
-	
-	bool is_err_page = is_exist_404();
-	//std::cout << "here1" << std::endl;
-	if (is_err_page){
+	switch (page_code)
+	{
+		case OK:
+			status_text = RES_STATUS_OK;
+			break;
+		case NOT_FOUND:
+			status_text = RES_STATUS_NOT_FOUND;
+			break;
+		case INTERNAL_SERVER_ERROR:
+			status_text = RES_STATUS_CREATED;
+			break;
+		default:
+			break;
+	}
 
-		//std::cout << "here2" << std::endl;
-        for (t_config_it it = g_config.begin(); it != g_config.end(); it++) {
+	if (is_exist_err_page(page_code)){
 
-            if ((*it)._err_page.find(404) != (*it)._err_page.end()){
+		std::string path;
 
-				std::string path;
-				if ((*it)._root != "/")
-					path = (*it)._root + (*it)._err_page[404];
-				else
-					path = (*it)._err_page[404];
-				//std::cout << "ERR PAGE PATH:\"" << path << "\"" << std::endl;
-				std::ifstream	file(path);
-				if (file.is_open()){
-					
-					//std::cout << "OPENED DDDDDDDDDDDDDDDDDDDDDDDDDD" << std::endl;
-					std::stringstream	buffer;
-					buffer << file.rdbuf();
-					body = buffer.str();
-				}else
-                	body = "Default Error!";
-				std::ostringstream ss;
-                ss << body.size();
-                headers[CONTENT_LENGTH] = ss.str();
-                return ;
-			}
+		if (CurrentServerConfig._root != "/")
+			path = CurrentServerConfig._root + CurrentServerConfig._err_page[page_code];
+		else
+			path = CurrentServerConfig._err_page[page_code];
+		std::ifstream	file(path);
+		if (file.is_open()){
+			
+			std::stringstream	buffer;
+			buffer << file.rdbuf();
+			body = buffer.str();
+		}else{
+
+			std::istringstream iss(page_code);
+			body = "<html><body><h1> Default page. Error code:" + iss.str() + "</h1></body></html>";
 		}
-    }else{
+		std::ostringstream ss;
+		ss << body.size();
+		headers[CONTENT_LENGTH] = ss.str();
+	}else{
 
-		//std::cout << "here3" << std::endl;
-        body = "<html><body><h1>404 Not Found</h1></body></html>";
+		std::istringstream iss(page_code);
+		body = "<html><body><h1> Default page. Error code:" + iss.str() + "</h1></body></html>";
         headers["Content-Length"] = std::to_string(body.size());
-    }
+	}
 }
+
+// void								HttpResponse::Default404Set(const HttpRequest & request){
+
+// 	http_version = request.http_version;
+// 	status_code = NOT_FOUND;
+// 	status_text = RES_STATUS_NOT_FOUND;
+// 	headers[CONTENT_DATE] = getHttpDate();
+// 	headers[CONTENT_SERVER] = "MyServer/1.0";
+// 	headers[CONTENT_TYPE] = "text/html; charset=UTF-8";
+	
+// 	bool is_err_page = is_exist_404();
+// 	//std::cout << "here1" << std::endl;
+// 	if (is_err_page){
+
+// 		//std::cout << "here2" << std::endl;
+//         for (t_config_it it = g_config.begin(); it != g_config.end(); it++) {
+
+//             if ((*it)._err_page.find(404) != (*it)._err_page.end()){
+
+// 				std::string path;
+// 				if ((*it)._root != "/")
+// 					path = (*it)._root + (*it)._err_page[404];
+// 				else
+// 					path = (*it)._err_page[404];
+// 				//std::cout << "ERR PAGE PATH:\"" << path << "\"" << std::endl;
+// 				std::ifstream	file(path);
+// 				if (file.is_open()){
+					
+// 					//std::cout << "OPENED DDDDDDDDDDDDDDDDDDDDDDDDDD" << std::endl;
+// 					std::stringstream	buffer;
+// 					buffer << file.rdbuf();
+// 					body = buffer.str();
+// 				}else
+//                 	body = "Default Error!";
+// 				std::ostringstream ss;
+//                 ss << body.size();
+//                 headers[CONTENT_LENGTH] = ss.str();
+//                 return ;
+// 			}
+// 		}
+//     }else{
+
+// 		//std::cout << "here3" << std::endl;
+//         body = "<html><body><h1>404 Not Found</h1></body></html>";
+//         headers["Content-Length"] = std::to_string(body.size());
+//     }
+// }
 
 std::string							HttpResponse::CreateResponse() {
 

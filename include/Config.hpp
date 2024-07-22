@@ -75,9 +75,10 @@ struct ServerConfig {
     {}
 };
 
-typedef std::vector<ServerConfig>                           t_config;
-typedef std::vector<ServerConfig>::iterator                 t_config_it;
-typedef std::map<std::string, LocationConfig>::iterator     t_location_it;
+typedef std::vector<ServerConfig>                               t_config;
+typedef std::vector<ServerConfig>::iterator                     t_config_it;
+typedef std::map<std::string, LocationConfig>::iterator         t_location_it;
+typedef std::map<std::string, LocationConfig>::const_iterator   t_location_it_const;
 extern t_config                                             g_config;
 
 class Config {
