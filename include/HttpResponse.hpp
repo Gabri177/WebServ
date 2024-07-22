@@ -9,6 +9,7 @@
 # include <sys/stat.h>
 # include <sys/types.h>
 # include <unistd.h>
+# include "ParserURL.hpp"
 # define CONTENT_TYPE "Content-Type"
 # define CONTENT_LENGTH "Content-Length"
 # define CONTENT_SERVER "Server"
@@ -43,7 +44,7 @@ struct HttpResponse{
 		void							Default404Set(const HttpRequest & request);
 		void							handleGet(const HttpRequest & request);
 		void							handlePost(const HttpRequest & request);
-		std::string						urlToFilePath(const std::string & url, const std::string & meth);
+		//std::string						urlToFilePath(const std::string & url, const std::string & meth);
 		std::string						loadFileContent(const std::string & url, const std::string & meth);
 		void							handleDelete(const HttpRequest & request);
 };
