@@ -6,7 +6,7 @@
 /*   By: pabpalma <pabpalma>                        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/20 12:23:50 by pabpalma          #+#    #+#             */
-/*   Updated: 2024/07/21 20:30:12 by pabpalma         ###   ########.fr       */
+/*   Updated: 2024/07/22 08:03:29 by pabpalma         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,7 @@ class HttpRequest {
 		std::string http_version;
 		std::map<std::string, std::string> headers;
 		std::string body;
+		size_t content_length;
 };
 
 class HttpRequestParser {

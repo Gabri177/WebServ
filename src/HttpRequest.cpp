@@ -6,7 +6,7 @@
 /*   By: pabpalma <pabpalma>                        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/20 12:37:02 by pabpalma          #+#    #+#             */
-/*   Updated: 2024/07/21 20:29:16 by pabpalma         ###   ########.fr       */
+/*   Updated: 2024/07/22 08:09:01 by pabpalma         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -96,6 +96,13 @@ void HttpRequestParser::parseHeaderChar(char byte, HttpRequest &httpRequest) {
 				state = HEADER_VALUE;
 			} else if (byte == '\r') {
 				state = BODY;
+				if (current_header_name.empty()) {
+					state = BODY;
+				}
+				else {
+					error_flag = true;
+					state = ERROR;
+				}
 			} else {
 				current_token += byte;
 			}
@@ -103,6 +110,10 @@ void HttpRequestParser::parseHeaderChar(char byte, HttpRequest &httpRequest) {
 		case HEADER_VALUE:
 			if (byte == '\r') {
 				httpRequest.headers[current_header_name] = current_token;
+				if (current_header_name == "Content-Length") {
+					char *end;
+					httpRequest.content_length = std::strtol(current_token.c_str(), &end, 10);
+				}
 				current_token.clear();
 				state = HEADER_LF;
 			} else {
