@@ -58,10 +58,10 @@ void handle_client_request(int client_fd) {
             try{
                 while (request_buffer.size() < total_length) {
                     bytes_read = recv(client_fd, buffer, 1, 0);
-                    request_buffer.insert(request_buffer.end(), buffer, buffer + bytes_read);
                     if (bytes_read <= 0) {
                         break;
                     }
+                    request_buffer.insert(request_buffer.end(), buffer, buffer + bytes_read);
                 }
             }catch (const std::exception & e){
             //std::cout << "here errrrrrror\n";
