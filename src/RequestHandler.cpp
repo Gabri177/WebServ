@@ -6,7 +6,7 @@
 /*   By: pabpalma <pabpalma>                        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/20 12:38:18 by pabpalma          #+#    #+#             */
-/*   Updated: 2024/07/20 12:39:48 by pabpalma         ###   ########.fr       */
+/*   Updated: 2024/07/23 10:31:55 by pabpalma         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,10 +27,17 @@ void handle_client_request(int client_fd) {
 
     while ((bytes_read = recv(client_fd, buffer, buffer_size, 0)) > 0) {
         request_buffer.insert(request_buffer.end(), buffer, buffer + bytes_read);
-        if (std::string(buffer, buffer + bytes_read).find("\r\n\r\n") != std::string::npos) {
+		std::string request(request_buffer.begin(), request_buffer.end());
+        if (request.find("\r\n\r\n") != std::string::npos) {
             break;
         }
     }
+
+	if (bytes_read < 0) {
+		std::cerr << "Error reading from socket" << std::endl;
+		close(client_fd);
+		return;
+	}
 
     if (!request_buffer.empty()) {
         std::string request_str(request_buffer.begin(), request_buffer.end());
@@ -63,54 +70,3 @@ void handle_client_request(int client_fd) {
 }
 
 
-//void handle_client_request(int client_fd) {
-//    char buffer[1024];
-//    int bytes_read = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
-//    if (bytes_read > 0) {
-//        buffer[bytes_read] = '\0';
-//        std::cout << "Receive data: " << buffer << std::endl;
-//        
-//        // Simple HTTP response
-//        const char* response_body = "Hello World";
-//        const char* response_template = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s";
-//        char response[1024];
-//        int response_length = snprintf(response, sizeof(response), response_template, strlen(response_body), response_body);
-//
-//        send(client_fd, response, response_length, 0);
-//
-//        std::cout << "Sent response: " << response << std::endl;
-//    }
-//    close(client_fd);
-//}
-
-
-
-// Handle client requests
-//void	handle_client_request(int client_fd){
-//
-//	char	buffer[1024];
-//	ssize_t count;
-//
-//	count = 0;
-//	memset(&buffer, 0, sizeof(buffer));
-//	while ((count = read(client_fd, buffer, sizeof(buffer))) > 0) {
-//
-//		// Echo back the data
-//		write(client_fd, buffer, count);
-//		printf ("Receive data: %s\n", buffer);
-//	        const char* response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 12\r\n\r\nHello World";
-//        send(client_fd, response, strlen(response), 0);
-//
-//        std::cout << "Sent response: " << response << std::endl;
-//
-//		//memset(&buffer, 0, sizeof(buffer));
-//	}
-//	if (count == -1 && errno != EAGAIN) {
-//
-//		close(client_fd);
-//		throw std::runtime_error("Server error: read failed");
-//	}
-//	if (count == 0)
-//		close(client_fd);
-//}
-//
