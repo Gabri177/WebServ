@@ -6,7 +6,7 @@
 /*   By: javier <javier@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/23 23:26:45 by javier            #+#    #+#             */
-/*   Updated: 2024/07/23 23:56:41 by javier           ###   ########.fr       */
+/*   Updated: 2024/07/24 00:06:38 by javier           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,7 +57,7 @@ int process_script(const std::string& script_path) {
         return 1;
     }
 
-    if (pid == 0) { // Child process
+    if (pid == 0) {
         char* envp[MAX_ENV_VARS];
         for (int i = 0; g_envp[i] && i < MAX_ENV_VARS - 1; ++i) {
             envp[i] = g_envp[i];
@@ -69,7 +69,7 @@ int process_script(const std::string& script_path) {
             perror("execve");
             _exit(1);
         }
-    } else { // Parent process
+    } else {
         int status;
         waitpid(pid, &status, 0);
         if (WIFEXITED(status) && WEXITSTATUS(status) == 0) {
@@ -78,5 +78,5 @@ int process_script(const std::string& script_path) {
             return 1;
         }
     }
-    return 1; // Should never reach here
+    return 1;
 }
