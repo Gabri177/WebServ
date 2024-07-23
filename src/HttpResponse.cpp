@@ -295,7 +295,7 @@ void						HttpResponse::handlePost(const HttpRequest & request){
             }
         }
 
-        boundaryPos = body.find(boundary, nextBoundaryPos);
+        boundaryPos = req_body.find(boundary, nextBoundaryPos);
 	}
 }
 

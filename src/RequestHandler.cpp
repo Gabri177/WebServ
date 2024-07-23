@@ -6,7 +6,7 @@
 /*   By: pabpalma <pabpalma>                        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/20 12:38:18 by pabpalma          #+#    #+#             */
-/*   Updated: 2024/07/23 10:31:55 by pabpalma         ###   ########.fr       */
+/*   Updated: 2024/07/23 12:03:00 by pabpalma         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,7 @@ void handle_client_request(int client_fd) {
     size_t buffer_size = 1024;
     char buffer[buffer_size];
     std::vector<char> request_buffer;
-    size_t bytes_read;
+    ssize_t bytes_read;
 
     while ((bytes_read = recv(client_fd, buffer, buffer_size, 0)) > 0) {
         request_buffer.insert(request_buffer.end(), buffer, buffer + bytes_read);
