@@ -5,7 +5,7 @@ INCLUDE_DIR = ./include
 OBJ_DIR = ./obj
 
 
-CPPFILES = main.cpp Config.cpp Server.cpp RequestHandler.cpp HttpRequest.cpp HttpResponse.cpp ParserURL.cpp
+CPPFILES = main.cpp Config.cpp Server.cpp RequestHandler.cpp HttpRequest.cpp HttpResponse.cpp ParserURL.cpp Cgi.cpp
 CPPFILES := $(addprefix $(SRC_DIR)/, $(CPPFILES))
 OFILES = $(addprefix $(OBJ_DIR)/, $(notdir $(CPPFILES:.cpp=.o)))
 
