@@ -127,9 +127,11 @@ const std::string										ParserURL::get_abs_url(std::string oriurl, const Serv
 				// 	std::cout << "List ON ..." << std::endl;
 				// else
 				// 	std::cout << "List OFF ..." << std::endl;
-				if (temp_loc._list && dir)
+				if (temp_loc._list && dir){
 				//std::cout << "++++++++++++++++++++++++++++++++++++\n";
+					closedir(dir);
 					return match_location_path;
+				}
 				else
 					return "";
 			}

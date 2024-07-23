@@ -58,7 +58,7 @@ std::string					list_directory(const std::string &path){
 
             if (strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0){
 
-                body << "<li><a href=\"" << entry->d_name << "\">" << entry->d_name << "</a></li>";
+                body << "<li>" << entry->d_name << "</li>";
             }
         }
         closedir(dir);
