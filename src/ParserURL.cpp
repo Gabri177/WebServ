@@ -120,8 +120,18 @@ const std::string										ParserURL::get_abs_url(std::string oriurl, const Serv
 			}
 			else{
 
+				//std::cout << "match_location_path ==> " << match_location_path << std::endl;
+				DIR *dir = opendir(match_location_path.c_str());
+
+				// if (temp_loc._list)
+				// 	std::cout << "List ON ..." << std::endl;
+				// else
+				// 	std::cout << "List OFF ..." << std::endl;
+				if (temp_loc._list && dir)
 				//std::cout << "++++++++++++++++++++++++++++++++++++\n";
-				return match_location_path;
+					return match_location_path;
+				else
+					return "";
 			}
 		} else
 			return match_location_path + "/" + filename;

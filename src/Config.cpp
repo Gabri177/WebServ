@@ -92,6 +92,15 @@ LocationConfig											parseLocation(const std::string & content){
 			
 			iss_line >> root;
 			loc._root = root;
+		}else if (FWord == LOC_LIST){
+
+			std::string	 stats;
+
+			iss_line >> stats;
+			if (stats == "on")
+				loc._list = true;
+			else if (stats == "off")
+				loc._list = false;
 		}
 	}
 	return loc;
