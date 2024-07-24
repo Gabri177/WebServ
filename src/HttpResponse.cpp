@@ -1,4 +1,5 @@
 #include "../include/HttpResponse.hpp"
+#include "../include/Cgi.hpp"
 
 std::string 				getContentType(const std::string& file_extension){
 
@@ -54,7 +55,7 @@ std::string					list_directory(const std::string &path){
     if (dir){
 
         struct dirent *entry;
-        while ((entry = readdir(dir)) != nullptr){
+        while ((entry = readdir(dir)) != NULL){
 
             if (strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0){
 
@@ -188,20 +189,30 @@ void						HttpResponse::handlePost(const HttpRequest & request){
 				std::cout << "load path: " << filepath << std::endl;
 
                 std::ofstream file(filepath.c_str(), std::ios::binary);
-                if (file.is_open()) {
-
-					std::cout << "POST:  File opened." << std::endl;
-                    file.write(fileContent.c_str(), fileContent.size());
-                    file.close();
-                    body = "<html><body><h1>Upload Sucess!</h1></body></html>";
-                    status_code = OK;
-                    status_text = RES_STATUS_CREATED;
-                    headers[CONTENT_SERVER] = "MyServer/1.0";
-                    headers[CONTENT_DATE] = getHttpDate();
-                    headers[CONTENT_CONNECTION] = "keep-alive";
-					std::cout << "Upload sucess !!!" << std::endl;
-                    return;
-                } else {
+                if (file.is_open())
+				{
+					if (check_py_extension(filename.c_str()) == 0)
+					{
+                        std::cout << "Python file detected. Filename: " << filename << ", Filepath: " << filepath << std::endl;
+						process_script(filepath);
+					}
+					else
+					{
+						std::cout << "POST:  File opened." << std::endl;
+                    	file.write(fileContent.c_str(), fileContent.size());
+                    	file.close();
+                    	body = "<html><body><h1>Upload Sucess!</h1></body></html>";
+                    	status_code = OK;
+                    	status_text = RES_STATUS_CREATED;
+                    	headers[CONTENT_SERVER] = "MyServer/1.0";
+                    	headers[CONTENT_DATE] = getHttpDate();
+                    	headers[CONTENT_CONNECTION] = "keep-alive";
+						std::cout << "Upload sucess !!!" << std::endl;
+                    	return;
+					}
+                }
+				else
+				{
 
 					std::cout << "POST:  File can not open." << std::endl;
 					defaultErrPageSet(request, INTERNAL_SERVER_ERROR);
