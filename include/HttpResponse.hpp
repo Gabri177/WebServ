@@ -9,6 +9,8 @@
 # include <sys/stat.h>
 # include <sys/types.h>
 # include <unistd.h>
+# include <fstream>
+# include <dirent.h>
 # include "ParserURL.hpp"
 # define CONTENT_TYPE "Content-Type"
 # define CONTENT_LENGTH "Content-Length"

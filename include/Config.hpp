@@ -28,6 +28,7 @@
 # define SERV_ERROR_PAGE "error_page"
 # define SERV_LOCATION "location"
 # define SERV_CLIENT_SIZE "client_size"
+# define LOC_LIST "list"
 
 struct LocationConfig {
 
@@ -35,6 +36,7 @@ struct LocationConfig {
     size_t                                  _client_size;
     std::vector<std::string>                _methods;
     bool                                    _autoindex;
+    bool                                    _list;
     std::string                             _cgi;
     std::string                             _index;
     std::map<int, std::string>              _err_page;
@@ -44,6 +46,7 @@ struct LocationConfig {
         : _root(""),
           _client_size(0),
           _autoindex(false),
+          _list(false),
           _cgi(""),
           _index(""),
           _return_url("")
