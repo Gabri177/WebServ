@@ -11,26 +11,25 @@
 /* ************************************************************************** */
 
 #ifndef CGI_HPP
-#define CGI_HPP
+# define CGI_HPP
 
-#include <unistd.h>
-#include <sys/wait.h>
-#include <sys/types.h>
-#include <fstream>
-#include <sstream>
-#include <iostream>
-#include <string>
-#include <cstdlib> 
-#include <cstring>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <cerrno>
-#include <string>
-#include "Server.hpp"
+# include <unistd.h>
+# include <sys/wait.h>
+# include <sys/types.h>
+# include <fstream>
+# include <sstream>
+# include <iostream>
+# include <string>
+# include <cstdlib> 
+# include <cstring>
+# include <sys/stat.h>
+# include <fcntl.h>
+# include <cerrno>
+# include <string>
+# include "Server.hpp"
 
 extern char **g_envp;
 std::string  run_cgi_script(const std::string& script_path);
-int check_py_extension(const char* filename);
 std::string readFile(const std::string& filename);
 
 #endif

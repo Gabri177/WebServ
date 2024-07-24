@@ -13,14 +13,6 @@
 #include "../include/Cgi.hpp"
 #define MAX_ENV_VARS 128
 
-int check_py_extension(const char* filename)
-{
-    const char* extension = strrchr(filename, '.'); 
-    if (extension == NULL || strcmp(extension, ".sh") != 0)
-        return -1;
-    return 0;
-}
-
 std::string readFile(const std::string& filename)
 {
     std::ifstream file(filename.c_str());
