@@ -42,9 +42,23 @@ t_str_keyval_map										ParserURL::get_url_key_val(const std::string & oriurl)
 
 const std::string										ParserURL::get_abs_url(std::string oriurl, const ServerConfig & curserv, const std::string & meth){
 
+
+
+	t_str_vec 			serv_methods = curserv._methods;
+	bool	  			is_access_servconfig = false;
+	for (t_str_vec_it it = serv_methods.begin(); it != serv_methods.end(); it ++)
+		if (*it == meth){
+			
+			is_access_servconfig = true;
+			break;
+		}
+	if (!is_access_servconfig)
+		return "";
+
 	//std::cout << "PARSERURL: oriurl==>\"" << oriurl << "\"" << std::endl;
 	t_str_vec			methods;
 	bool				is_access = false;
+	bool				is_loc_match = false;
 	size_t				p_question_mark = oriurl.find('?');
 	if(p_question_mark != std::string::npos)
 		oriurl = oriurl.substr(0, p_question_mark);
@@ -67,78 +81,111 @@ const std::string										ParserURL::get_abs_url(std::string oriurl, const Serv
 	}else
 		path = oriurl;
 
-	std::string			match_location_path = path;
-	int					path_grade = 0;
-	LocationConfig		temp_loc;
-	// std::cout << "PARSERURL: path=>>\"" << path << "\"" << std::endl;
-	// std::cout << "PARSERURL: filename=>>\"" << filename << "\"" << std::endl;
-	for(t_location_it_const it = curserv._location.begin(); it != curserv._location.end(); it ++){
+	if (!curserv._location.empty()){
 
-		if (path.find(it->first) == 0 && count_occurrences(it->first, '/') >= path_grade){
+		std::string			match_location_path = path;
+		int					path_grade = 0;
+		LocationConfig		temp_loc;
+		// std::cout << "PARSERURL: path=>>\"" << path << "\"" << std::endl;
+		// std::cout << "PARSERURL: filename=>>\"" << filename << "\"" << std::endl;
+		for(t_location_it_const it = curserv._location.begin(); it != curserv._location.end(); it ++){
 
-			match_location_path = path;
-			if (it->first != "/"){
+			if (path.find(it->first) == 0 && count_occurrences(it->first, '/') >= path_grade){
 
-				path_grade = count_occurrences(it->first, '/');
-				// std::cout << "\n\n				PARSERURL: current_match_path ==>\"" << it->second._root << "\"" << std::endl;
-				// std::cout << "				PARSERURL: current_match_first ==>\"" << it->first << "\"" << std::endl;
-				// std::cout << "				PARSERURL: current_match_path ==>\"" << match_location_path << "\"\n\n" << std::endl;
-				replace_path(match_location_path, it->first, it->second._root);
-				//std::cout << "				PARSERURL: switch_path results ==>\"" << match_location_path << "\"" << std::endl;
-				temp_loc = it->second;
-				//std::cout << "				AUTOINDEX::::::::" << temp_loc._autoindex << std::endl;
-				methods = it->second._methods;
-				break ;
-			}else{
+				match_location_path = path;
+				is_loc_match = true;
+				if (it->first != "/"){
 
-				//match_location_path = it->second._root;
-				match_location_path = it->second._root + path;
-				//std::cout << "							PARSERURL: switch_path results ==>\"" << match_location_path << "\"" << std::endl;
-				methods = it->second._methods;
-				temp_loc = it->second;
-			}
-		}
-	}
+					path_grade = count_occurrences(it->first, '/');
+					// std::cout << "\n\n				PARSERURL: current_match_path ==>\"" << it->second._root << "\"" << std::endl;
+					// std::cout << "				PARSERURL: current_match_first ==>\"" << it->first << "\"" << std::endl;
+					// std::cout << "				PARSERURL: current_match_path ==>\"" << match_location_path << "\"\n\n" << std::endl;
+					replace_path(match_location_path, it->first, it->second._root);
+					//std::cout << "				PARSERURL: switch_path results ==>\"" << match_location_path << "\"" << std::endl;
+					temp_loc = it->second;
+					//std::cout << "				AUTOINDEX::::::::" << temp_loc._autoindex << std::endl;
+					methods = it->second._methods;
+					break ;
+				}else{
 
-	// std::cout << "PARSERURL: match_location_path =>>\"" << match_location_path << "\"" << std::endl;
-	// std::cout << "PARSERURL: filename =>>\"" << filename << "\"" << std::endl; 
-
-	for (t_str_vec_it it = methods.begin(); it != methods.end(); it ++)
-		if (*it == meth){
-			
-			is_access = true;
-			break;
-		}
-	if (is_access){
-
-		if(!is_file){
-
-			if (temp_loc._autoindex == true && !temp_loc._index.empty()){
-
-				//std::cout << "------------------------------------\n";
-				return match_location_path + "/" + temp_loc._index;
-			}
-			else{
-
-				//std::cout << "match_location_path ==> " << match_location_path << std::endl;
-				DIR *dir = opendir(match_location_path.c_str());
-
-				// if (temp_loc._list)
-				// 	std::cout << "List ON ..." << std::endl;
-				// else
-				// 	std::cout << "List OFF ..." << std::endl;
-				if (temp_loc._list && dir){
-				//std::cout << "++++++++++++++++++++++++++++++++++++\n";
-					closedir(dir);
-					return match_location_path;
+					//match_location_path = it->second._root;
+					match_location_path = it->second._root + path;
+					//std::cout << "							PARSERURL: switch_path results ==>\"" << match_location_path << "\"" << std::endl;
+					methods = it->second._methods;
+					temp_loc = it->second;
 				}
-				else
-					return "";
 			}
-		} else
-			return match_location_path + "/" + filename;
-	}else
-		return "";
+		}
+
+		// std::cout << "PARSERURL: match_location_path =>>\"" << match_location_path << "\"" << std::endl;
+		// std::cout << "PARSERURL: filename =>>\"" << filename << "\"" << std::endl; 
+
+		for (t_str_vec_it it = methods.begin(); it != methods.end(); it ++)
+			if (*it == meth){
+				
+				is_access = true;
+				break;
+			}
+		if (is_access && is_loc_match){
+
+			if(!is_file){
+
+				if (temp_loc._autoindex == true && !temp_loc._index.empty()){
+
+					//std::cout << "------------------------------------\n";
+					return match_location_path + "/" + temp_loc._index;
+				}
+				else{
+
+					//std::cout << "match_location_path ==> " << match_location_path << std::endl;
+					DIR *dir = opendir(match_location_path.c_str());
+
+					// if (temp_loc._list)
+					// 	std::cout << "List ON ..." << std::endl;
+					// else
+					// 	std::cout << "List OFF ..." << std::endl;
+					if (temp_loc._list && dir){
+					//std::cout << "++++++++++++++++++++++++++++++++++++\n";
+						closedir(dir);
+						return match_location_path;
+					}
+					else
+						return "";
+				}
+			} else
+				return match_location_path + "/" + filename;
+		}else
+			goto SERVER_CONFIG;
+			//return "";
+	} else {
+
+		SERVER_CONFIG:
+			is_access = false;
+			methods = curserv._methods;
+			for (t_str_vec_it it = methods.begin(); it != methods.end(); it ++)
+				if (*it == meth){
+					
+					is_access = true;
+					break;
+				}
+			if (is_access){
+
+				if (!curserv._root.empty()) {
+
+					if (!curserv._index.empty() && !is_file)
+						return curserv._root + "/" + oriurl + "/" + curserv._index;
+					else
+						return curserv._root + "/" + oriurl;
+				} else {
+
+					if (!curserv._index.empty() && !is_file)
+						return oriurl + "/" + curserv._index;
+					else
+						return oriurl;
+				}
+			}else
+				return "";
+	}
 
 	/// methods test
 }
