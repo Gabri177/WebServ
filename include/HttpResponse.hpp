@@ -12,6 +12,7 @@
 # include <fstream>
 # include <dirent.h>
 # include "ParserURL.hpp"
+# include "Cgi.hpp"
 # define CONTENT_TYPE "Content-Type"
 # define CONTENT_LENGTH "Content-Length"
 # define CONTENT_SERVER "Server"

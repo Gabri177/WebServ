@@ -106,17 +106,30 @@ std::string					HttpResponse::loadFileContent(const std::string & url, const std
 
 void						HttpResponse::handleGet(const HttpRequest & request){
 
-	try {
+	//try{
 		//std::string cur_url = urlToFilePath(request.url, "GET");
 		std::string cur_url = ParserURL::get_abs_url(request.url, CurrentServerConfig, "GET");
 
 		//std::cout << "Cur_path == > " << cur_url << std::endl;
 		std::cout << "handleGet: start do the GET request..." << std::endl;
 
-		if (cur_url.find('.') == std::string::npos)
+		if (cur_url.find('.') == std::string::npos) {
+
 			body = list_directory(cur_url);
-		else
-			body = loadFileContent(request.url, "GET");
+			headers[CONTENT_TYPE] = getContentType(".html");
+		} else {
+
+			if (cur_url.find(".py") != std::string::npos) {
+				
+				headers[CONTENT_TYPE] = getContentType(".html");
+				body = "<html><body><h1>Result ==></h1><h2>" + run_cgi_script(cur_url) +"</h2></body></html>";
+			} else {
+
+				headers[CONTENT_TYPE] = getContentType(cur_url.substr(cur_url.find_last_of(".")));
+				body = loadFileContent(request.url, "GET");
+			}
+		}
+			
 		//std::cout << "GET:: BODY :" << body << std::endl;
 		if (body == "") {
 			defaultErrPageSet(request, NOT_FOUND);
@@ -125,17 +138,18 @@ void						HttpResponse::handleGet(const HttpRequest & request){
 		std::cout << "\n\nBODY CONTENT:\"" << body << "\"" << std::endl;
 		status_code = OK;
 		status_text = RES_STATUS_OK;
-		headers[CONTENT_TYPE] = getContentType(cur_url.substr(cur_url.find_last_of(".")));
+
 		std::stringstream	ss;
 		ss << body.size();
 		headers[CONTENT_LENGTH] = ss.str();
 		headers[CONTENT_SERVER] = "MyServer/1.0";
 		headers[CONTENT_DATE] = getHttpDate();
 		headers[CONTENT_CONNECTION] = "keep-alive";
-	}catch (const std::exception & e){
+	// } catch (const std::exception & e) {
 
-		std::cout << e.what() << std::endl;
-	}
+	// 	std::cout << "ERROR : " << e.what() << std::endl;
+	// }
+	
 }
 
 
@@ -193,7 +207,13 @@ void						HttpResponse::handlePost(const HttpRequest & request){
 					std::cout << "POST:  File opened." << std::endl;
                     file.write(fileContent.c_str(), fileContent.size());
                     file.close();
-                    body = "<html><body><h1>Upload Sucess!</h1></body></html>";
+					
+					if (filename.find(".py") != std::string::npos){
+						
+						body = "<html><body><h1>Result ==></h1><h2>" + run_cgi_script(filepath) +"</h2></body></html>";
+					}else
+						body = "<html><body><h1>Upload Sucess!</h1></body></html>";
+
                     status_code = OK;
                     status_text = RES_STATUS_CREATED;
                     headers[CONTENT_SERVER] = "MyServer/1.0";
