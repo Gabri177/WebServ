@@ -38,7 +38,7 @@ struct HttpResponse{
 	std::map<std::string, std::string>	headers;
 	std::string							body;
 
-										HttpResponse(const HttpRequest & request, int clt_fd);
+										HttpResponse(const HttpRequest & request, int client_fd);
 	std::string							CreateResponse();
 
 	private:
@@ -52,6 +52,8 @@ struct HttpResponse{
 		std::string						loadFileContent(const std::string & url, const std::string & meth);
 		void							handleDelete(const HttpRequest & request);
 		bool							is_exist_err_page(t_status_respond page_num);
+		int								client_fd;
+		std::string 					cookie_header;
 };
 
 
