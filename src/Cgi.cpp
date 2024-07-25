@@ -6,12 +6,32 @@
 /*   By: javier <javier@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/23 23:26:45 by javier            #+#    #+#             */
-/*   Updated: 2024/07/24 21:36:30 by javier           ###   ########.fr       */
+/*   Updated: 2024/07/25 09:19:32 by pabpalma         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../include/Cgi.hpp"
 #define MAX_ENV_VARS 128
+
+std::string removeDuplicateSlashes(const std::string& path) {
+    std::string result;
+    bool lastWasSlash = false;
+
+    for (size_t i = 0; i < path.length(); ++i) {
+        char currentChar = path[i];
+        if (currentChar == '/') {
+            if (!lastWasSlash) {
+                result += currentChar;
+                lastWasSlash = true;
+            }
+        } else {
+            result += currentChar;
+            lastWasSlash = false;
+        }
+    }
+
+    return result;
+}
 
 std::string readFile(const std::string& filename)
 {
@@ -27,8 +47,10 @@ std::string readFile(const std::string& filename)
     return buffer.str();
 }
 
-std::string  run_cgi_script(const std::string& script_path)
+std::string  run_cgi_script(const std::string& raw_script_path)
 {
+	std::string script_path = removeDuplicateSlashes(raw_script_path);
+
     if (chmod(script_path.c_str(), S_IRUSR | S_IWUSR | S_IXUSR) == -1) {
         std::cerr << "Error: chmod failed. " << strerror(errno) << std::endl;
         return "Error: chmod failed. ";
@@ -73,7 +95,7 @@ std::string  run_cgi_script(const std::string& script_path)
         {
             close(fd);
             std::string result = readFile("Cgi");
-            //unlink("Cgi");
+            unlink("Cgi");
             return result;
         } else {
             close(fd);
