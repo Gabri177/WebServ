@@ -6,12 +6,11 @@
 /*   By: javier <javier@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/23 23:26:45 by javier            #+#    #+#             */
-/*   Updated: 2024/07/25 11:48:43 by pabpalma         ###   ########.fr       */
+/*   Updated: 2024/07/25 14:36:38 by pabpalma         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../include/Cgi.hpp"
-#include "../include/Utils.hpp"
 
 #define MAX_ENV_VARS 128
 
@@ -29,9 +28,8 @@ std::string readFile(const std::string& filename)
     return buffer.str();
 }
 
-std::string  run_cgi_script(const std::string& raw_script_path)
+std::string  run_cgi_script(const std::string& script_path)
 {
-	std::string script_path = removeDuplicateSlashes(raw_script_path);
 
     if (chmod(script_path.c_str(), S_IRUSR | S_IWUSR | S_IXUSR) == -1) {
         std::cerr << "Error: chmod failed. " << strerror(errno) << std::endl;
