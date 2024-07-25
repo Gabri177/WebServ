@@ -1,4 +1,17 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   HttpResponse.cpp                                   :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: pabpalma <pabpalma>                        +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/07/25 11:49:20 by pabpalma          #+#    #+#             */
+/*   Updated: 2024/07/25 11:49:30 by pabpalma         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "../include/HttpResponse.hpp"
+#include "../include/Utils.hpp"
 
 std::string 				getContentType(const std::string& file_extension){
 
@@ -156,7 +169,8 @@ void						HttpResponse::handleGet(const HttpRequest & request){
 void						HttpResponse::handlePost(const HttpRequest & request){
 
 	std::cout << "start do the POST request..." << std::endl;
-	std::string  path = ParserURL::get_abs_url(request.url, CurrentServerConfig, "POST");
+	std::string  raw_path = ParserURL::get_abs_url(request.url, CurrentServerConfig, "POST");
+	std::string path = removeDuplicateSlashes(raw_path);
 	std::cout << "POST: path -> " << path << std::endl;
 	if (path == "" || request.headers.find("Content-Type") == request.headers.end()) {
 

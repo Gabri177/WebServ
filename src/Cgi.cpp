@@ -6,32 +6,14 @@
 /*   By: javier <javier@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/23 23:26:45 by javier            #+#    #+#             */
-/*   Updated: 2024/07/25 09:19:32 by pabpalma         ###   ########.fr       */
+/*   Updated: 2024/07/25 11:48:43 by pabpalma         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../include/Cgi.hpp"
+#include "../include/Utils.hpp"
+
 #define MAX_ENV_VARS 128
-
-std::string removeDuplicateSlashes(const std::string& path) {
-    std::string result;
-    bool lastWasSlash = false;
-
-    for (size_t i = 0; i < path.length(); ++i) {
-        char currentChar = path[i];
-        if (currentChar == '/') {
-            if (!lastWasSlash) {
-                result += currentChar;
-                lastWasSlash = true;
-            }
-        } else {
-            result += currentChar;
-            lastWasSlash = false;
-        }
-    }
-
-    return result;
-}
 
 std::string readFile(const std::string& filename)
 {
