@@ -24,6 +24,7 @@ void handle_client_request(int client_fd) {
     char buffer[buffer_size];
     std::vector<char> request_buffer;
     ssize_t bytes_read;
+    ssize_t bytes_send;
 
     while ((bytes_read = recv(client_fd, buffer, buffer_size, 0)) > 0) {
         request_buffer.insert(request_buffer.end(), buffer, buffer + bytes_read);
@@ -34,7 +35,7 @@ void handle_client_request(int client_fd) {
     }
 
 	if (bytes_read < 0) {
-		std::cerr << "Error reading from socket" << std::endl;
+		std::cerr << "Error reading from socket" << std::endl; // aqui hay que devolver una pagiona con 404 info
 		close(client_fd);
 		return;
 	}
@@ -64,7 +65,8 @@ void handle_client_request(int client_fd) {
 
         HttpResponse res_msg_obj(request, client_fd);
         std::string msg = res_msg_obj.CreateResponse();
-        send(client_fd, msg.c_str(), msg.size(), 0);
+        if ((bytes_send = send(client_fd, msg.c_str(), msg.size(), 0)) == -1)
+            close (client_fd);
     }
     close(client_fd);
 }

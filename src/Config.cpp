@@ -36,11 +36,13 @@ LocationConfig											parseLocation(const std::string & content){
 		std::string				FWord;
 
 		iss_line >> FWord;
+
 		if (FWord == LOC_CLIENT_SIZE){
 
 			long	len;
 
-			iss_line >> len;
+			if (!(iss_line >> len))
+				throw std::runtime_error ("Error: reading client size...");
 			loc._client_size = len;
 		}else if (FWord == LOC_METHODS){
 
@@ -51,31 +53,35 @@ LocationConfig											parseLocation(const std::string & content){
 
 			std::string	 path;
 
-			iss_line >> path;
+			if (!(iss_line >> path))
+				throw std::runtime_error("Error: reading cgi path...");
 			loc._cgi = path;
 		}else if (FWord == LOC_ERROR_PAGE){
 
 			std::string	 i;
 			std::string	 path;
 
-			iss_line >> i >> path;
-			if (i == "400")
-				loc._err_page[400] = path;
-			else if (i == "405")
-				loc._err_page[405] = path;
-			else if (i == "404")
-				loc._err_page[404] = path;
+			if (!(iss_line >> i >> path))
+				throw std::runtime_error ("Error: wrong format of err_page set!!!");
+
+			std::stringstream	tem_ss(i);
+			int					pagenum;
+			if (!(tem_ss >> pagenum))
+				throw std::runtime_error ("Error: wrong format of err_page set!!!");
+			loc._err_page[pagenum] = path;
 		}else if (FWord == "return"){
 
 			std::string  path;
 
-			iss_line >> path;
+			if (!(iss_line >> path))
+				throw std::runtime_error ("Error: reading return path...");
 			loc._return_url = path;
 		}else if (FWord == LOC_AUTOINDEX){
 
 			std::string	 stats;
 
-			iss_line >> stats;
+			if (!(iss_line >> stats))
+				throw std::runtime_error ("Error: reading autoindex status...");
 			if (stats == "on")
 				loc._autoindex = true;
 			else if (stats == "off")
@@ -84,19 +90,22 @@ LocationConfig											parseLocation(const std::string & content){
 
 			std::string  path;
 
-			iss_line >> path;
+			if (!(iss_line >> path))
+				throw std::runtime_error ("Error: reading loc index path...");
 			loc._index = path;
 		}else if (FWord == LOC_ROOT){
 
 			std::string root;
 			
-			iss_line >> root;
+			if (!(iss_line >> root))
+				throw std::runtime_error ("Error: reading loc root path...");
 			loc._root = root;
 		}else if (FWord == LOC_LIST){
 
 			std::string	 stats;
 
-			iss_line >> stats;
+			if (!(iss_line >> stats))
+				throw std::runtime_error ("Error: reading loc list status...");
 			if (stats == "on")
 				loc._list = true;
 			else if (stats == "off")
@@ -120,7 +129,8 @@ std::vector<ServerConfig>                    			Config::parseConfig(const std::s
         std::istringstream  	iss(line);
         std::string 			FWord;
 		std::string				SWord;
-        iss >> FWord >> SWord;
+        
+		iss >> FWord >> SWord;
 
         if (FWord == SERV_KEY_WORD){
 
@@ -131,8 +141,9 @@ std::vector<ServerConfig>                    			Config::parseConfig(const std::s
             }
         }else if (FWord == SERV_LISTEN){
 
-            std::string  cur_ip;
-			size_t				start = SWord.find_first_of(':');
+            std::string 	cur_ip;
+			size_t			start = SWord.find_first_of(':');
+			
 			if (start == std::string::npos)
 				throw std::runtime_error("Error: wrong format in ip and port set!!!");
             cur_ip = str_no_space(SWord.substr(0, start));
@@ -161,12 +172,11 @@ std::vector<ServerConfig>                    			Config::parseConfig(const std::s
 			std::string			temp;
 			if (!(iss >> temp))
 				throw std::runtime_error ("Error: wrong format of err_page set!!!");
-			if (SWord == "400")
-				serverConfig._err_page[400] = temp;
-			else if (SWord == "405")
-				serverConfig._err_page[405] = temp;
-			else if (SWord == "404")
-				serverConfig._err_page[404] = temp;
+			std::stringstream	ss(SWord);
+			int					pagenum;
+			if (!(ss >> pagenum))
+				throw std::runtime_error ("Error: wrong format of err_page set!!!");
+			serverConfig._err_page[pagenum] = temp;
 		}else if (FWord == SERV_CLIENT_SIZE){
 
 			char *end;

@@ -109,6 +109,26 @@ void						HttpResponse::handleGet(const HttpRequest & request){
 	//try{
 		//std::string cur_url = urlToFilePath(request.url, "GET");
 		std::string cur_url = ParserURL::get_abs_url(request.url, CurrentServerConfig, "GET");
+		std::string red_url = ParserURL::get_redireccion_url(request.url, CurrentServerConfig, "GET", CurrentPort);
+
+		std::cout << "GET: redireccion url => \"" << red_url << "\"" << std::endl;
+		if (!red_url.empty()) {
+
+			status_code = FOUND;
+			status_text = RES_STATUS_FOUND;
+			headers[CONTENT_LOCATION] = red_url;
+			headers[CONTENT_SERVER] = "MyServer/1.0";
+			headers[CONTENT_DATE] = getHttpDate();
+			headers[CONTENT_CONNECTION] = "keep-alive";
+
+			// Optionally, set the body to explain the redirection
+			body = "<html><body><h1>302 Found</h1><p>Resource has moved to <a href=\"" + red_url + "\">" + red_url + "</a></p></body></html>";
+			std::stringstream ss;
+			ss << body.size();
+			headers[CONTENT_LENGTH] = ss.str();
+			headers[CONTENT_TYPE] = getContentType(".html");
+			return;
+    	}
 
 		//std::cout << "Cur_path == > " << cur_url << std::endl;
 		std::cout << "handleGet: start do the GET request..." << std::endl;
@@ -170,7 +190,9 @@ void						HttpResponse::handlePost(const HttpRequest & request){
 	if (content_type.find("multipart/form-data") == std::string::npos) {
 
         std::cout << "POST: Content-Type is not multipart/form-data..." << std::endl;
-        defaultErrPageSet(request, NOT_FOUND);
+		std::cout << "POST: Content-Type: " << it->second << std::endl;
+		std::cout << "POST: The body size of request is => " << request.body.size() << std::endl;
+        //defaultErrPageSet(request, NOT_FOUND);
         return;
     }
 	std::string boundary = "--" + content_type.substr(content_type.find("boundary=") + 9);
@@ -207,19 +229,22 @@ void						HttpResponse::handlePost(const HttpRequest & request){
 					std::cout << "POST:  File opened." << std::endl;
                     file.write(fileContent.c_str(), fileContent.size());
                     file.close();
+					std::cout << "Upload sucess !!!" << std::endl;
 					
 					if (filename.find(".py") != std::string::npos){
 						
 						body = "<html><body><h1>Result ==></h1><h2>" + run_cgi_script(filepath) +"</h2></body></html>";
-					}else
-						body = "<html><body><h1>Upload Sucess!</h1></body></html>";
+						status_code = OK;
+						status_text = RES_STATUS_CREATED;
+						headers[CONTENT_SERVER] = "MyServer/1.0";
+						headers[CONTENT_DATE] = getHttpDate();
+						headers[CONTENT_CONNECTION] = "keep-alive";
+						
+					}else{
 
-                    status_code = OK;
-                    status_text = RES_STATUS_CREATED;
-                    headers[CONTENT_SERVER] = "MyServer/1.0";
-                    headers[CONTENT_DATE] = getHttpDate();
-                    headers[CONTENT_CONNECTION] = "keep-alive";
-					std::cout << "Upload sucess !!!" << std::endl;
+						defaultErrPageSet(request, OK);
+					}
+						
                     return;
                 } else {
 
@@ -251,32 +276,19 @@ void						HttpResponse::handleDelete(const HttpRequest & request){
 		return ;
 	}
 
+	if (cur_url == ""){
+		
+		std::cout << "DELETE: refuse to delete the file, do not have right..." << std::endl;
+		defaultErrPageSet(request, FORBIDDEN);
+		return ;
+	}
+
 	if (remove(cur_url.c_str()) == 0){
 
-		std::cout << "DELETE: file deleted successfully..." << std::endl;
-        body = "<html><body><h1>File Deleted</h1></body></html>";
-        status_code = OK;
-        status_text = RES_STATUS_OK;
-        headers[CONTENT_TYPE] = "text/html; charset=UTF-8";
-		std::stringstream ss;
-		ss << body.size();
-        headers[CONTENT_LENGTH] = ss.str();
-        headers[CONTENT_SERVER] = "MyServer/1.0";
-        headers[CONTENT_DATE] = getHttpDate();
-        headers[CONTENT_CONNECTION] = "keep-alive";
+		defaultErrPageSet(request, OK);
 	}else {
 
-        std::cout << "DELETE: file could not be deleted..." << std::endl;
-        status_code = INTERNAL_SERVER_ERROR;
-        status_text = "Internal Server Error";
-        body = "<html><body><h1>500 Internal Server Error</h1></body></html>";
-        headers[CONTENT_TYPE] = "text/html; charset=UTF-8";
-        std::stringstream ss;
-		ss << body.size();
-        headers[CONTENT_LENGTH] = ss.str();
-        headers[CONTENT_SERVER] = "MyServer/1.0";
-        headers[CONTENT_DATE] = getHttpDate();
-        headers[CONTENT_CONNECTION] = "keep-alive";
+        defaultErrPageSet(request, INTERNAL_SERVER_ERROR);
     }
 
 	
@@ -299,17 +311,21 @@ HttpResponse::HttpResponse(const HttpRequest & request, int clt_fd): http_versio
 
 	std::cout << "                          port:" << server_port << std::endl;
 	std::cout << "                          ip  :" << server_ip << std::endl;
+
+	CurrentPort = server_port;
 	bool is_find = false;
 	for (t_config_it it = g_config.begin(); it != g_config.end(); it ++){
 		
 		if ((*it)._ip == server_ip && std::find((*it)._port.begin(), (*it)._port.end(), server_port) != (*it)._port.end()){
 			this->CurrentServerConfig = *it;
+			//std::cout << "GET: 1index_page: " << it->_index << std::endl;
 			is_find = true;
 			break ;
 		}
 
 		if ((*it)._ip == "0.0.0.0" && std::find((*it)._port.begin(), (*it)._port.end(), server_port) != (*it)._port.end()){
 			this->CurrentServerConfig = *it;
+			//std::cout << "GET: 2index_page: " << it->_index << std::endl;
 			is_find = true;
 			break ;
 		}
@@ -324,6 +340,7 @@ HttpResponse::HttpResponse(const HttpRequest & request, int clt_fd): http_versio
 
 				if ((*it)._name == name && (*it)._ip == server_ip && std::find((*it)._port.begin(), (*it)._port.end(), server_port) != (*it)._port.end()){
 					this->CurrentServerConfig = *it;
+					//std::cout << "GET: 3index_page: " << it->_index << std::endl;
 					break ;
 				}
 			}
@@ -340,10 +357,10 @@ HttpResponse::HttpResponse(const HttpRequest & request, int clt_fd): http_versio
 
 
 
-	if (sizeof(request.body) > CurrentServerConfig._client_size){
+	if (request.body.size() > CurrentServerConfig._client_size){
 
 		std::cout << "Client body size is too large!!!" << std::endl;
-        defaultErrPageSet(request, INTERNAL_SERVER_ERROR);
+        defaultErrPageSet(request, TOO_LARGE);
         return;
 	}
 
@@ -394,6 +411,8 @@ void								HttpResponse::defaultErrPageSet(const HttpRequest & request, t_statu
 
 	if (is_exist_err_page(page_code)){
 
+
+		std::cout << "DEFAULT ERR PAGE: page exist..." << std::endl;
 		std::string path;
 
 		if (CurrentServerConfig._root != "/")
@@ -410,7 +429,7 @@ void								HttpResponse::defaultErrPageSet(const HttpRequest & request, t_statu
 
 			std::stringstream ss;
 			ss << page_code;
-			body = "<html><body><h1> Default page. Error code:" + ss.str() + "</h1></body></html>";
+			body = "<html><body><h1> Default page. Status code:" + ss.str() + "</h1></body></html>";
 		}
 		std::ostringstream ss_size;
 		ss_size << body.size();
@@ -419,7 +438,7 @@ void								HttpResponse::defaultErrPageSet(const HttpRequest & request, t_statu
 
 		std::stringstream ss;
 		ss << page_code;
-		body = "<html><body><h1> Default page. Error code:" + ss.str() + "</h1></body></html>";
+		body = "<html><body><h1> Default page. Status code:" + ss.str() + "</h1></body></html>";
         std::ostringstream ss_size;
 		ss_size << body.size();
 		headers[CONTENT_LENGTH] = ss_size.str();

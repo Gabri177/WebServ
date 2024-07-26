@@ -43,7 +43,7 @@ t_str_keyval_map										ParserURL::get_url_key_val(const std::string & oriurl)
 const std::string										ParserURL::get_abs_url(std::string oriurl, const ServerConfig & curserv, const std::string & meth){
 
 
-
+	std::cout << "ParserURL: index_page => " << curserv._index << std::endl;
 	t_str_vec 			serv_methods = curserv._methods;
 	bool	  			is_access_servconfig = false;
 	for (t_str_vec_it it = serv_methods.begin(); it != serv_methods.end(); it ++)
@@ -188,4 +188,81 @@ const std::string										ParserURL::get_abs_url(std::string oriurl, const Serv
 	}
 
 	/// methods test
+}
+
+
+const std::string								ParserURL::get_redireccion_url(std::string oriurl, const ServerConfig & curserv, const std::string & meth, int curport){
+
+
+	t_str_vec 			serv_methods = curserv._methods;
+	bool	  			is_access_servconfig = false;
+	for (t_str_vec_it it = serv_methods.begin(); it != serv_methods.end(); it ++)
+		if (*it == meth){
+			
+			is_access_servconfig = true;
+			break;
+		}
+	if (!is_access_servconfig)
+		return "";
+
+	bool				is_loc_match = false;
+	size_t				p_question_mark = oriurl.find('?');
+	if(p_question_mark != std::string::npos)
+		oriurl = oriurl.substr(0, p_question_mark);
+
+	bool				is_file = false;
+	size_t				p_file_mark = oriurl.find('.');
+	std::string			path;
+	std::string			filename;
+		
+
+	if (p_file_mark != std::string::npos){
+
+		is_file = true;
+		path = oriurl.substr(0, oriurl.find_last_of('/') + 1);
+		filename = oriurl.substr(oriurl.find_last_of('/') + 1);
+	}else
+		path = oriurl;
+
+	if (!curserv._location.empty()){
+
+		std::string			match_location_path;
+		int					path_grade = 0;
+		LocationConfig		temp_loc;
+
+		for(t_location_it_const it = curserv._location.begin(); it != curserv._location.end(); it ++){
+
+			if (path.find(it->first) == 0 && count_occurrences(it->first, '/') >= path_grade && !it->second._return_url.empty()){
+
+				match_location_path = path;
+				is_loc_match = true;
+				if (it->first != "/"){
+
+					path_grade = count_occurrences(it->first, '/');
+					replace_path(match_location_path, it->first, it->second._return_url);
+					temp_loc = it->second;
+					break ;
+				}else{
+
+					replace_path(match_location_path, it->first, it->second._return_url);
+					temp_loc = it->second;
+				}
+			}
+		}
+
+		if (is_loc_match){
+
+			std::cout << "ParserURL: port => " << curserv._port[0] << std::endl; 
+			std::stringstream	ss;
+			ss << curport;
+			std::string 		ip_port = "http://" + curserv._ip + ":" + ss.str();
+				
+			if(!is_file)
+				return ip_port + match_location_path;
+			else
+				return ip_port + match_location_path + "/" + filename;
+		}else
+			return "";
+	} else 
+		return "";
 }

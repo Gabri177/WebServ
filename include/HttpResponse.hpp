@@ -17,23 +17,28 @@
 # define CONTENT_LENGTH "Content-Length"
 # define CONTENT_SERVER "Server"
 # define CONTENT_DATE "Date"
+# define CONTENT_LOCATION "Location"
 # define CONTENT_CONNECTION "Connection"
 # define RES_STATUS_OK "OK"
 # define RES_STATUS_NOT_FOUND "Not Found"
 # define RES_STATUS_CREATED "Created"
+# define RES_STATUS_FOUND "Found"
 
 class HttpRequest;
 typedef enum  e_status_respond{
 
 	OK = 200,
 	NOT_FOUND = 404,
-	INTERNAL_SERVER_ERROR = 500
+	INTERNAL_SERVER_ERROR = 500,
+	FORBIDDEN = 403,
+	TOO_LARGE = 413,
+	FOUND = 302
 }t_status_respond;
 
 struct HttpResponse{
 
 	std::string							http_version;
-	t_status_respond						status_code;
+	t_status_respond					status_code;
 	std::string							status_text;
 	std::map<std::string, std::string>	headers;
 	std::string							body;
@@ -44,6 +49,7 @@ struct HttpResponse{
 	private:
 
 		ServerConfig					CurrentServerConfig;
+		int								CurrentPort;
 		//void							Default404Set(const HttpRequest & request);
 		void							defaultErrPageSet(const HttpRequest & request, t_status_respond page_code);
 		void							handleGet(const HttpRequest & request);

@@ -18,6 +18,7 @@ class ParserURL {
 	public:
 
 		static t_str_keyval_map									get_url_key_val(const std::string & oriurl);
+		static const std::string								get_redireccion_url(std::string oriurl, const ServerConfig & curserv, const std::string & meth, int curport);
 		static const std::string								get_abs_url(std::string oriurl, const ServerConfig & curserv, const std::string & meth);
 };
 
