@@ -66,7 +66,7 @@ std::string					list_directory(const std::string &path){
     if (dir){
 
         struct dirent *entry;
-        while ((entry = readdir(dir)) != nullptr){
+        while ((entry = readdir(dir)) != NULL){
 
             if (strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0){
 
