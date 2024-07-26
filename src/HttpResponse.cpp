@@ -6,7 +6,7 @@
 /*   By: pabpalma <pabpalma>                        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/25 11:49:20 by pabpalma          #+#    #+#             */
-/*   Updated: 2024/07/26 16:56:46 by pabpalma         ###   ########.fr       */
+/*   Updated: 2024/07/26 19:51:59 by pabpalma         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,10 +19,24 @@
 #include <sstream>
 #include <ctime>
 #include <map>
+#include <iterator>
 
 
 ///////////////////////// BONUS
 SessionManager sessionManager;
+
+
+//	All_of
+
+template <typename InputIterator, typename Predicate>
+bool all_of_custom(InputIterator begin, InputIterator end, Predicate pred) {
+	for (InputIterator it = begin; it != end; ++ it) {
+		if (!pred(*it)) {
+			return false;
+		}
+	}
+	return true;
+}
 
 // Sends an HTTP response to the client
 
@@ -321,8 +335,8 @@ void						HttpResponse::handlePost(const HttpRequest & request){
         }
 
 		if (username.length() >= 4 && password.length() >= 4 &&
-			std::all_of(username.begin(), username.end(), ::isalnum) &&
-    		std::all_of(password.begin(), password.end(), ::isalnum)) {
+			all_of_custom(username.begin(), username.end(), ::isalnum) &&
+    		all_of_custom(password.begin(), password.end(), ::isalnum)) {
             UserData user_data;
             user_data.username = username;
             user_data.is_logged_in = true;
