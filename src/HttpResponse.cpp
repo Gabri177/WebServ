@@ -6,7 +6,7 @@
 /*   By: pabpalma <pabpalma>                        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/25 11:49:20 by pabpalma          #+#    #+#             */
-/*   Updated: 2024/07/26 12:51:38 by pabpalma         ###   ########.fr       */
+/*   Updated: 2024/07/26 16:33:57 by pabpalma         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -163,13 +163,10 @@ std::string					HttpResponse::loadFileContent(const std::string & url, const std
 
 	std::cout << "Loading file content ..." << std::endl;
 	std::ifstream	file(ParserURL::get_abs_url(url, CurrentServerConfig, meth).c_str());
-	//std::cout << "loadFileContent: absolute path: \"" << ParserURL::get_abs_url(url, CurrentServerConfig, meth) << "\"" << std::endl;
 	if (file.is_open()){
 
-		//std::cout << "loadFileContent: file opend successfully..." << std::endl;
 		std::stringstream	buffer;
 		buffer << file.rdbuf();
-		//std::cout << "loadFileContent: file content: \"" << buffer.str() << "\"" << std::endl;
 		return buffer.str();
 	}else{
 		return "";
@@ -178,11 +175,8 @@ std::string					HttpResponse::loadFileContent(const std::string & url, const std
 
 void						HttpResponse::handleGet(const HttpRequest & request){
 
-	//try{
-		//std::string cur_url = urlToFilePath(request.url, "GET");
 		std::string cur_url = ParserURL::get_abs_url(request.url, CurrentServerConfig, "GET");
 
-		//std::cout << "Cur_path == > " << cur_url << std::endl;
 		std::cout << "handleGet: start do the GET request..." << std::endl;
 
 		////////////////////////////////	BONUS
@@ -242,9 +236,9 @@ void						HttpResponse::handleGet(const HttpRequest & request){
 			    return;
 			}
 		}
-
-
 		///////////////////////////////		BONUS
+
+
 		if (cur_url.find('.') == std::string::npos) {
 
 			body = list_directory(cur_url);
@@ -308,7 +302,9 @@ void						HttpResponse::handlePost(const HttpRequest & request){
             }
         }
 
-        if (username == "user" && password == "pass") {
+		if (username.length() >= 4 && password.length() >= 4 &&
+			std::all_of(username.begin(), username.end(), ::isalnum) &&
+    		std::all_of(password.begin(), password.end(), ::isalnum)) {
             UserData user_data;
             user_data.username = username;
             user_data.is_logged_in = true;

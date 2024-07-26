@@ -6,7 +6,7 @@
 /*   By: pabpalma <pabpalma>                        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/25 17:16:02 by pabpalma          #+#    #+#             */
-/*   Updated: 2024/07/25 18:28:14 by pabpalma         ###   ########.fr       */
+/*   Updated: 2024/07/26 15:37:12 by pabpalma         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,7 @@
 
 struct UserData {
 	std::string username;
-	bool is_logged_in;
+	bool 		is_logged_in;
 	 UserData() : is_logged_in(false) {}
 };
 
