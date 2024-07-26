@@ -6,7 +6,7 @@
 /*   By: pabpalma <pabpalma>                        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/25 11:49:20 by pabpalma          #+#    #+#             */
-/*   Updated: 2024/07/25 19:21:38 by pabpalma         ###   ########.fr       */
+/*   Updated: 2024/07/26 12:51:38 by pabpalma         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,10 +25,18 @@
 SessionManager sessionManager;
 
 // Sends an HTTP response to the client
+
 void sendResponse(int client_fd, const std::string& response) {
     const char* response_data = response.c_str();
     size_t total_sent = 0;
     size_t len = response.size();
+
+    // Comprobación manual de la línea de inicio para HTTP/1.1
+    if (response.size() < 8 || response.substr(0, 8) != "HTTP/1.1") {
+        std::cerr << "Invalid response format. Must start with HTTP/1.1 status line.\n";
+        close(client_fd);
+        return;
+    }
 
     while (total_sent < len) {
         ssize_t sent = send(client_fd, response_data + total_sent, len - total_sent, 0);
@@ -40,6 +48,8 @@ void sendResponse(int client_fd, const std::string& response) {
         total_sent += sent;
     }
 }
+
+
 
 void writeResponse(std::stringstream& response, int status_code, const std::string& status_text, const std::string& content_type, const std::string& body, const std::string& cookie_header) {
     time_t now = time(0);
@@ -178,42 +188,63 @@ void						HttpResponse::handleGet(const HttpRequest & request){
 		////////////////////////////////	BONUS
 		// Gestionar solicitud de login
 		if (request.url == "/login" && request.method == "GET") {
-		    std::string content = loadFileContent("html/login.html", "GET");
-		    sendResponse(client_fd, content);
-		    return;
-		}
+			std::string content = loadFileContent("html/login.html", "GET");
+			if (!content.empty()) {
+			    std::stringstream response;
+			    writeResponse(response, 200, "OK", "text/html", content, "");
+			    sendResponse(client_fd, response.str());
+			} else {
+			    // Enviar página de error si el contenido no se puede cargar
+			    std::stringstream response;
+			    writeResponse(response, 404, "Not Found", "text/html", "Page not found", "");
+			    sendResponse(client_fd, response.str());
+			}
+			return;
+    	}
 		
 		// Gestionar solicitud de página segura
+
 		if (request.url == "/secure_page.html") {
-		    std::string cookie;
+			std::string cookie;
 			try {
-    			cookie = request.headers.at("Cookie");
+			    cookie = request.headers.at("Cookie");
 			} catch (const std::out_of_range&) {
-				std::cout << "NO COOKIES" << std::endl;
-				return;
+			    std::cout << "NO COOKIES" << std::endl;
+			    std::stringstream response;
+			    writeResponse(response, 401, "Unauthorized", "text/html", "Access denied", "");
+			    sendResponse(client_fd, response.str());
+			    return;
 			}
-		    size_t pos = cookie.find("session_id=");
-		    if (pos != std::string::npos) {
-		        size_t end = cookie.find(";", pos);
-		        if (end == std::string::npos) end = cookie.length();
-		        std::string session_id = cookie.substr(pos + 11, end - (pos + 11));
-		
-		        if (sessionManager.is_session_valid(session_id)) {
-		           // std::string body = loadFileContent("html/secure_page.html", "GET");
-		           	body = loadFileContent("html/secure_page.html", "GET");
-		            sendResponse(client_fd, body);
-		        } else {
-		            //std::string body = "Unauthorized";
-		            body = "Unauthorized";
-		            std::stringstream response;
-		            writeResponse(response, 401, "Unauthorized", "text/html", body, cookie_header);
-		            sendResponse(client_fd, response.str());
-		        }
-		        return;
-		    }
+			
+			size_t pos = cookie.find("session_id=");
+			if (pos != std::string::npos) {
+			    size_t end = cookie.find(";", pos);
+			    if (end == std::string::npos) end = cookie.length();
+			    std::string session_id = cookie.substr(pos + 11, end - (pos + 11));
+			
+			    if (sessionManager.is_session_valid(session_id)) {
+			        std::string localBody = loadFileContent("html/secure_page.html", "GET");
+					std::stringstream response;
+					writeResponse(response, 200, "OK", "text/html", localBody, "");
+			        sendResponse(client_fd, response.str());
+			    } else {
+			        std::string localBody = "Unauthorized";
+			        std::stringstream response;
+			        writeResponse(response, 401, "Unauthorized", "text/html", localBody, "");
+			        sendResponse(client_fd, response.str());
+			    }
+			    return;
+			} else {
+			    // Envía una respuesta de no autorizado si no se encuentra el session_id en la cookie
+			    std::stringstream response;
+			    writeResponse(response, 401, "Unauthorized", "text/html", "Access denied", "");
+			    sendResponse(client_fd, response.str());
+			    return;
+			}
 		}
 
-		///////////////////////////////
+
+		///////////////////////////////		BONUS
 		if (cur_url.find('.') == std::string::npos) {
 
 			body = list_directory(cur_url);
@@ -283,9 +314,9 @@ void						HttpResponse::handlePost(const HttpRequest & request){
             user_data.is_logged_in = true;
             std::string session_id = sessionManager.create_session(user_data);
             std::string body_content = loadFileContent("html/secure_page.html", "GET");
+			cookie_header = "Set-Cookie: session_id=" + session_id + "; Path=/; HttpOnly";
             std::stringstream response;
             writeResponse(response, 200, "OK", "text/html", body_content, cookie_header);
-            cookie_header = "Set-Cookie: session_id=" + session_id + "; HttpOnly; Path=/";  // Establecer el encabezado de la cookie
             sendResponse(client_fd, response.str());
         } else {
             std::string body_content = "Login failed";
@@ -429,7 +460,7 @@ void						HttpResponse::handleDelete(const HttpRequest & request){
 
 
 HttpResponse::HttpResponse(const HttpRequest & request, int clt_fd)
-    : http_version(request.http_version), client_fd(clt_fd), cookie_header("") {
+    : http_version(request.http_version), status_code(OK), status_text("OK"), client_fd(clt_fd), cookie_header("") {
 
 	// find the server config to see if it comfort those limits
 	struct sockaddr_in server_addr;
