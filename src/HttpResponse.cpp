@@ -383,6 +383,10 @@ void						HttpResponse::handlePost(const HttpRequest & request){
     std::cout << "Boundary: " << boundary << std::endl;
 
 	std::string req_body = request.body;
+	if (req_body.empty()){
+		defaultErrPageSet(request, INTERNAL_SERVER_ERROR);
+		return ;
+	}
     size_t boundaryPos = req_body.find(boundary);
     while (boundaryPos != std::string::npos) {
         size_t nextBoundaryPos = req_body.find(boundary, boundaryPos + boundary.size());
