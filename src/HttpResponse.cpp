@@ -6,7 +6,7 @@
 /*   By: pabpalma <pabpalma>                        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/25 11:49:20 by pabpalma          #+#    #+#             */
-/*   Updated: 2024/07/26 19:51:59 by pabpalma         ###   ########.fr       */
+/*   Updated: 2024/07/27 13:06:12 by pabpalma         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -277,7 +277,7 @@ void						HttpResponse::handleGet(const HttpRequest & request){
 			headers[CONTENT_TYPE] = getContentType(".html");
 		} else {
 
-			if (cur_url.find(".py") != std::string::npos) {
+			if (cur_url.find(".py") != std::string::npos || cur_url.find(".pl") != std::string::npos) {
 				
 				headers[CONTENT_TYPE] = getContentType(".html");
 				body = "<html><body><h1>Result ==></h1><h2>" + run_cgi_script(cur_url) +"</h2></body></html>";
@@ -415,7 +415,7 @@ void						HttpResponse::handlePost(const HttpRequest & request){
                     file.close();
 					std::cout << "Upload sucess !!!" << std::endl;
 					
-					if (filename.find(".py") != std::string::npos){
+					if (filename.find(".py") != std::string::npos || filename.find(".pl") != std::string::npos){
 						
 						body = "<html><body><h1>Result ==></h1><h2>" + run_cgi_script(filepath) +"</h2></body></html>";
 						status_code = OK;
