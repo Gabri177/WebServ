@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpResponse.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: pabpalma <pabpalma>                        +#+  +:+       +#+        */
+/*   By: yugao <yugao@student.42madrid.com>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/25 11:49:20 by pabpalma          #+#    #+#             */
-/*   Updated: 2024/07/27 13:06:12 by pabpalma         ###   ########.fr       */
+/*   Updated: 2024/08/03 23:32:33 by yugao            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -553,17 +553,25 @@ HttpResponse::HttpResponse(const HttpRequest & request, int clt_fd)
         return;
 	}
 
-
-	std::string     test_path = ParserURL::get_abs_url(request.url, CurrentServerConfig, "GET");
+	std::string 	red_url = ParserURL::get_redireccion_url(request.url, CurrentServerConfig, "GET", CurrentPort); 
+	std::string     test_path = ParserURL::get_abs_url(request.url, CurrentServerConfig, request.method);
 	std::cout << "\n\nPARSERURL:   \"" << test_path << "\"\n" << std::endl;
 
 	// To see if exist the url in the configfile if no it will find the url (root + filename)
-	if (test_path == ""){
+	if (test_path == "" && red_url.empty()){
 
 		std::cout << "No pass the url test, do not exist!!!" << std::endl;
         defaultErrPageSet(request, NOT_FOUND);
         return;
     }
+
+	if (test_path == RES_STATUS_NOT_ALLOWED  && red_url.empty()){
+
+		std::cout << "The recurse was nos allowed!!!" << std::endl;
+		defaultErrPageSet(request, NOT_ALLOWED);
+		return ;
+
+	}
 
 	if(request.method == "GET")
 		handleGet(request);

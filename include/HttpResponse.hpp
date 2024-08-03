@@ -32,7 +32,8 @@ typedef enum  e_status_respond{
 	INTERNAL_SERVER_ERROR = 500,
 	FORBIDDEN = 403,
 	TOO_LARGE = 413,
-	FOUND = 302
+	FOUND = 302,
+	NOT_ALLOWED = 405
 }t_status_respond;
 
 struct HttpResponse{

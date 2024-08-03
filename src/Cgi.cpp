@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Cgi.cpp                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: javier <javier@student.42.fr>              +#+  +:+       +#+        */
+/*   By: yugao <yugao@student.42madrid.com>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/23 23:26:45 by javier            #+#    #+#             */
-/*   Updated: 2024/07/25 14:36:38 by pabpalma         ###   ########.fr       */
+/*   Updated: 2024/08/03 21:53:15 by yugao            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,7 +30,6 @@ std::string readFile(const std::string& filename)
 
 std::string  run_cgi_script(const std::string& script_path)
 {
-
     if (chmod(script_path.c_str(), S_IRUSR | S_IWUSR | S_IXUSR) == -1) {
         std::cerr << "Error: chmod failed. " << strerror(errno) << std::endl;
         return "Error: chmod failed. ";

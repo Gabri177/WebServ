@@ -118,12 +118,16 @@ LocationConfig											parseLocation(const std::string & content){
 std::vector<ServerConfig>                    			Config::parseConfig(const std::string & filename){
 
     std::ifstream               file(filename.c_str());
-    if (!file.is_open())
-        throw std::runtime_error("Error: could not open the file!!!");
-    
-    if (file.peek() == std::ifstream::traits_type::eof())
-        throw std::runtime_error("Error: configuration file is empty!!!");
+    if (!file.is_open()){
 
+		throw std::runtime_error("Error: could not open the file!!!");
+	}
+
+	if (file.peek() == std::ifstream::traits_type::eof()){
+
+		throw std::runtime_error("Error: configuration file is empty!!!");
+	}
+    
     std::string  				line;
     ServerConfig 				serverConfig;
 

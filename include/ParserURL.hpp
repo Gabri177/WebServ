@@ -7,6 +7,7 @@
 # include <sstream>
 # include "Server.hpp"
 # include "Config.hpp"
+# define RES_STATUS_NOT_ALLOWED "not allowed"
 
 typedef std::map<std::string, std::string>						t_str_keyval_map;
 typedef t_str_keyval_map::iterator								t_str_keyval_map_it;
