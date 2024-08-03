@@ -20,8 +20,10 @@ int	main(int argc, char **argv, char **envp){
 	}
 	std::cout << "Using configuration file: " << config_file << std::endl;
 
-	int		count_reboot = 0;
+	int			count_reboot = 0;
+	const int	max_reboots = 5;
 	ABORT:
+	if (count_reboot < max_reboots) {
 		try{
 			
 			Config		_config;
@@ -36,6 +38,10 @@ int	main(int argc, char **argv, char **envp){
 			sleep(10);
 			goto ABORT;
 		}
+	}else {
+			std::cout << "Error: Maximum reboot attempt reached. Existing..." << std::endl;
+			return 1;
+	}
 
 	return 0;
 }

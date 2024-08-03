@@ -121,6 +121,9 @@ std::vector<ServerConfig>                    			Config::parseConfig(const std::s
     if (!file.is_open())
         throw std::runtime_error("Error: could not open the file!!!");
     
+    if (file.peek() == std::ifstream::traits_type::eof())
+        throw std::runtime_error("Error: configuration file is empty!!!");
+
     std::string  				line;
     ServerConfig 				serverConfig;
 
@@ -199,6 +202,9 @@ std::vector<ServerConfig>                    			Config::parseConfig(const std::s
     if (!serverConfig._ip.empty()){
         servers.push_back(serverConfig);
 	}
+
+	if (servers.empty())
+        throw std::runtime_error("Error: no valid server configurations found!");
 
 	return servers;
 }
