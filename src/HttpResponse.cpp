@@ -6,7 +6,7 @@
 /*   By: yugao <yugao@student.42madrid.com>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/25 11:49:20 by pabpalma          #+#    #+#             */
-/*   Updated: 2024/08/03 23:32:33 by yugao            ###   ########.fr       */
+/*   Updated: 2024/08/04 00:31:23 by yugao            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -255,6 +255,7 @@ void						HttpResponse::handleGet(const HttpRequest & request){
          std::string red_url = ParserURL::get_redireccion_url(request.url, CurrentServerConfig, "GET", CurrentPort);  
          std::cout << "GET: redireccion url => \"" << red_url << "\"" << std::endl;
 		 if (!red_url.empty()) {
+			status_code = FOUND;
 			status_text = RES_STATUS_FOUND;
 			headers[CONTENT_LOCATION] = red_url;
 			headers[CONTENT_SERVER] = "MyServer/1.0";

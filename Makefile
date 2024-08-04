@@ -9,7 +9,7 @@ CPPFILES = main.cpp Config.cpp Server.cpp RequestHandler.cpp HttpRequest.cpp Htt
 CPPFILES := $(addprefix $(SRC_DIR)/, $(CPPFILES))
 OFILES = $(addprefix $(OBJ_DIR)/, $(notdir $(CPPFILES:.cpp=.o)))
 
-CPPFLAGS = -g3 -Wall -Wextra -Werror -std=c++98 -I$(INCLUDE_DIR)
+CPPFLAGS = -g3 -fsanitize=address -Wall -Wextra -Werror -std=c++98 -I$(INCLUDE_DIR)
 
 all: $(NAME)
 

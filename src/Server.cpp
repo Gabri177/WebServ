@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: pabpalma <pabpalma>                        +#+  +:+       +#+        */
+/*   By: yugao <yugao@student.42madrid.com>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/23 12:57:40 by pabpalma          #+#    #+#             */
-/*   Updated: 2024/07/23 13:00:55 by pabpalma         ###   ########.fr       */
+/*   Updated: 2024/08/04 01:08:41 by yugao            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -77,7 +77,11 @@ void Server::start() {
             if (inet_pton(AF_INET, (*its)._ip.c_str(), &host_addr.sin_addr.s_addr) != 1)
                 throw std::runtime_error("Error: transfer host ip to uint32_t!!!");
             host_addr.sin_port = htons(*it);
+            
+            int                yes = 1;
+            setsockopt(host_sock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
 
+            
             if (bind(host_sock, (struct sockaddr *)&host_addr, sizeof(host_addr)) == -1)
                 err_close_throw(host_sock, "Server start error2222!!!");
 
