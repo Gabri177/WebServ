@@ -6,7 +6,7 @@
 /*   By: pabpalma <pabpalma>                        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/20 12:37:02 by pabpalma          #+#    #+#             */
-/*   Updated: 2024/07/20 12:37:10 by pabpalma         ###   ########.fr       */
+/*   Updated: 2024/08/04 13:53:54 by pabpalma         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,7 +26,7 @@ HttpRequest HttpRequestParser::parse(const std::string &request) {
 
     httpRequest.content_length = 0;
     while (std::getline(request_stream, line)) {
-        if (line[line.size() - 1] == '\r') {
+        if (!line.empty() && line[line.size() - 1] == '\r') {
             line = line.substr(0, line.size() - 1);
         }
 
@@ -65,13 +65,9 @@ void HttpRequestParser::parseHeaderLine(const std::string &line, HttpRequest &ht
         header_value = header_value.substr(header_value.find_first_not_of(" \t"));
         httpRequest.headers[header_name] = header_value;
 
-        //std::cout << "Header_Name                       \"" << header_name << "\"" << std::endl;
-        //std::cout << "Header_Value                       \"" << header_value << "\"" << std::endl;
         if (header_name == "Content-Length") {
-
             char *end;
             httpRequest.content_length = std::strtol(header_value.c_str(), &end, 10);
-            //std::cout << "LENGTH==================================" << httpRequest.content_length << "=============" << std::endl;
         }
     }
 }
