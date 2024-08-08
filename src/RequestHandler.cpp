@@ -65,6 +65,10 @@ void handle_client_request(int client_fd) {
 
         HttpResponse res_msg_obj(request, client_fd);
         std::string msg = res_msg_obj.CreateResponse();
+        
+        std::cout << "handle_client_request: responde_msg => +++++MSG_START+++++\"" << msg << "\"+++++MSG_END+++++\n\n";
+
+
         if ((bytes_send = send(client_fd, msg.c_str(), msg.size(), 0)) == -1)
             close (client_fd);
     }

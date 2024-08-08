@@ -71,7 +71,7 @@ void Server::start() {
         for (std::vector<int>::iterator it = (*its)._port.begin(); it != (*its)._port.end(); ++it) {
             int host_sock = -1;
             if ((host_sock = socket(AF_INET, SOCK_STREAM, 0)) == -1)
-                throw std::runtime_error("Server start error1111!!!");
+                throw std::runtime_error("Server start error : establishment of socket!!!");
             memset(&host_addr, 0, sizeof(host_addr));
             host_addr.sin_family = AF_INET;
             if (inet_pton(AF_INET, (*its)._ip.c_str(), &host_addr.sin_addr.s_addr) != 1)
@@ -83,10 +83,10 @@ void Server::start() {
 
             
             if (bind(host_sock, (struct sockaddr *)&host_addr, sizeof(host_addr)) == -1)
-                err_close_throw(host_sock, "Server start error2222!!!");
+                err_close_throw(host_sock, "Server start error : bind!!!");
 
             if (listen(host_sock, 4096) == -1)
-                err_close_throw(host_sock, "Server start error3333!!!");
+                err_close_throw(host_sock, "Server start error : listen!!!");
 
             set_nonblocking(host_sock);
 

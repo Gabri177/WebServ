@@ -24,6 +24,8 @@
 # define RES_STATUS_CREATED "Created"
 # define RES_STATUS_FOUND "Found"
 
+# define SET_COOKIE "Set-Cookie"
+
 class HttpRequest;
 typedef enum  e_status_respond{
 

@@ -175,14 +175,18 @@ static std::string			getHttpDate(){
 
 std::string					HttpResponse::loadFileContent(const std::string & url, const std::string & meth){
 
-	std::cout << "Loading file content ..." << std::endl;
+	std::cout << "loadFileContent: Loading file content ..." << std::endl;
+	std::cout << "loadFileContent: Trying to openfile ..." << std::endl;
 	std::ifstream	file(ParserURL::get_abs_url(url, CurrentServerConfig, meth).c_str());
 	if (file.is_open()){
 
+		std::cout << "loadFileContent: Start loading file content ..." << std::endl;
 		std::stringstream	buffer;
 		buffer << file.rdbuf();
+		std::cout << "loadFileContent: File content loaded ..." << std::endl;
 		return buffer.str();
 	}else{
+		std::cout << "loadFileContent: Open file failed ..." << std::endl;
 		return "";
 	}
 }
@@ -192,68 +196,12 @@ void						HttpResponse::handleGet(const HttpRequest & request){
 		std::string cur_url = ParserURL::get_abs_url(request.url, CurrentServerConfig, "GET");
 		std::cout << "handleGet: start do the GET request..." << std::endl;
 
-		////////////////////////////////	BONUS
-		// Gestionar solicitud de login
-		if (request.url == "/login" && request.method == "GET") {
-			std::string content = loadFileContent("html/login.html", "GET");
-			if (!content.empty()) {
-			    std::stringstream response;
-			    writeResponse(response, 200, "OK", "text/html", content, "");
-			    sendResponse(client_fd, response.str());
-			} else {
-			    // Enviar página de error si el contenido no se puede cargar
-			    std::stringstream response;
-			    writeResponse(response, 404, "Not Found", "text/html", "Page not found", "");
-			    sendResponse(client_fd, response.str());
-			}
-			return;
-    	}
-		
-		// Gestionar solicitud de página segura
-
-		if (request.url == "/secure_page.html") {
-			std::string cookie;
-			try {
-			    cookie = request.headers.at("Cookie");
-			} catch (const std::out_of_range&) {
-			    std::cout << "NO COOKIES" << std::endl;
-			    std::stringstream response;
-			    writeResponse(response, 401, "Unauthorized", "text/html", "Access denied", "");
-			    sendResponse(client_fd, response.str());
-			    return;
-			}
-			
-			size_t pos = cookie.find("session_id=");
-			if (pos != std::string::npos) {
-			    size_t end = cookie.find(";", pos);
-			    if (end == std::string::npos) end = cookie.length();
-			    std::string session_id = cookie.substr(pos + 11, end - (pos + 11));
-			
-			    if (sessionManager.is_session_valid(session_id)) {
-			        std::string localBody = loadFileContent("html/secure_page.html", "GET");
-					std::stringstream response;
-					writeResponse(response, 200, "OK", "text/html", localBody, "");
-			        sendResponse(client_fd, response.str());
-			    } else {
-			        std::string localBody = "Unauthorized";
-			        std::stringstream response;
-			        writeResponse(response, 401, "Unauthorized", "text/html", localBody, "");
-			        sendResponse(client_fd, response.str());
-			    }
-			    return;
-			} else {
-			    // Envía una respuesta de no autorizado si no se encuentra el session_id en la cookie
-			    std::stringstream response;
-			    writeResponse(response, 401, "Unauthorized", "text/html", "Access denied", "");
-			    sendResponse(client_fd, response.str());
-			    return;
-			}
-		}
-		///////////////////////////////		BONUS
+		std::cout << "handleGet: get_abs_url => \"" << cur_url << "\"" << std::endl;
+		std::cout << "handleGet: request.url => \"" << request.url << "\"" << std::endl;
 
 
          std::string red_url = ParserURL::get_redireccion_url(request.url, CurrentServerConfig, "GET", CurrentPort);  
-         std::cout << "GET: redireccion url => \"" << red_url << "\"" << std::endl;
+         std::cout << "handleGet: get_redireccion_url => redireccion url => \"" << red_url << "\"" << std::endl;
 		 if (!red_url.empty()) {
 			status_code = FOUND;
 			status_text = RES_STATUS_FOUND;
@@ -283,6 +231,63 @@ void						HttpResponse::handleGet(const HttpRequest & request){
 				headers[CONTENT_TYPE] = getContentType(".html");
 				body = "<html><body><h1>Result ==></h1><h2>" + run_cgi_script(cur_url) +"</h2></body></html>";
 			} else {
+				
+		////////////////////////////////	BONUS
+		// Gestionar solicitud de login
+		
+		
+		// Gestionar solicitud de página segura
+
+			if (request.url.find("secure_page.html") != std::string::npos) {
+				std::string cookie;
+				try {
+					cookie = request.headers.at("Cookie");
+				} catch (const std::out_of_range&) {
+					std::cout << "NO COOKIES" << std::endl;
+					std::stringstream response;
+					defaultErrPageSet(request, NOT_ALLOWED);
+					return;
+				}
+				
+				size_t pos = cookie.find("session_id=");
+				if (pos != std::string::npos) {
+					size_t end = cookie.find(";", pos);
+					if (end == std::string::npos) end = cookie.length();
+					std::string session_id = cookie.substr(pos + 11, end - (pos + 11));
+				
+					if (sessionManager.is_session_valid(session_id)) {
+
+						body = loadFileContent("/html/secure_page.html", "GET");
+						if (body == "") {
+							defaultErrPageSet(request, NOT_FOUND);
+							return;
+						}
+						status_code = OK;
+						status_text = RES_STATUS_OK;
+
+						std::stringstream	ss;
+						ss << body.size();
+						headers[CONTENT_LENGTH] = ss.str();
+						headers[CONTENT_SERVER] = "MyServer/1.0";
+						headers[CONTENT_DATE] = getHttpDate();
+						headers[CONTENT_CONNECTION] = "keep-alive";
+						headers[CONTENT_TYPE] = getContentType(".html");
+
+					} else {
+
+						defaultErrPageSet(request, NOT_ALLOWED);
+					}
+					return;
+				} else {
+					// Envía una respuesta de no autorizado si no se encuentra el session_id en la cookie
+					defaultErrPageSet(request, NOT_ALLOWED);
+					return;
+				}
+			}
+			(void) client_fd;
+		///////////////////////////////		BONUS
+
+
 
 				headers[CONTENT_TYPE] = getContentType(cur_url.substr(cur_url.find_last_of(".")));
 				body = loadFileContent(request.url, "GET");
@@ -294,7 +299,7 @@ void						HttpResponse::handleGet(const HttpRequest & request){
 			defaultErrPageSet(request, NOT_FOUND);
 			return;
 		}
-		std::cout << "\n\nBODY CONTENT:\"" << body << "\"" << std::endl;
+		std::cout << "\n\nhandleGet: BODY CONTENT => \"" << body << "\"" << std::endl;
 		status_code = OK;
 		status_text = RES_STATUS_OK;
 
@@ -314,58 +319,17 @@ void						HttpResponse::handleGet(const HttpRequest & request){
 
 void						HttpResponse::handlePost(const HttpRequest & request){
 
-	std::cout << "start do the POST request..." << std::endl;
+	std::cout << "handlePost: start do the POST request..." << std::endl;
 	std::string  path = ParserURL::get_abs_url(request.url, CurrentServerConfig, "POST");
-	std::cout << "POST: path -> " << path << std::endl;
-	
-	////////////////////////////////		BONUS
-
-	  if (request.url == "/login") {
-        std::string username;
-        std::string password;
-        size_t pos = request.body.find("username=");
-        if (pos != std::string::npos) {
-            size_t end = request.body.find("&", pos);
-            username = request.body.substr(pos + 9, end - (pos + 9));
-            pos = request.body.find("password=", end);
-            if (pos != std::string::npos) {
-                end = request.body.find("&", pos);
-                if (end == std::string::npos) end = request.body.length();
-                password = request.body.substr(pos + 9, end - (pos + 9));
-            }
-        }
-
-		if (username.length() >= 4 && password.length() >= 4 &&
-			all_of_custom(username.begin(), username.end(), ::isalnum) &&
-    		all_of_custom(password.begin(), password.end(), ::isalnum)) {
-            UserData user_data;
-            user_data.username = username;
-            user_data.is_logged_in = true;
-            std::string session_id = sessionManager.create_session(user_data);
-            std::string body_content = loadFileContent("html/secure_page.html", "GET");
-			cookie_header = "Set-Cookie: session_id=" + session_id + "; Path=/; HttpOnly";
-            std::stringstream response;
-            writeResponse(response, 200, "OK", "text/html", body_content, cookie_header);
-            sendResponse(client_fd, response.str());
-        } else {
-            std::string body_content = "Login failed";
-            std::stringstream response;
-            writeResponse(response, 401, "Unauthorized", "text/html", body_content, cookie_header);
-            sendResponse(client_fd, response.str());
-        }
-        return;
-    }
+	std::cout << "handlePost: get_abs_url => " << path << std::endl;
+	std::cout << "handlePost: request.url => " << request.url << std::endl;
 
 
-
-	//////////////////////////////			BONUS
-
-
-
+	std::cout << "handlePost: start do the mandatory part of the bonus\n";
 
 	if (path == "" || request.headers.find("Content-Type") == request.headers.end()) {
 
-		std::cout << "POST: could not find Content-Type..." << std::endl;
+		std::cout << "handlePost: could not find Content-Type..." << std::endl;
 		defaultErrPageSet(request, NOT_FOUND);
 		return;
 	}
@@ -374,9 +338,79 @@ void						HttpResponse::handlePost(const HttpRequest & request){
 	std::string content_type = it->second;
 	if (content_type.find("multipart/form-data") == std::string::npos) {
 
-        std::cout << "POST: Content-Type is not multipart/form-data..." << std::endl;
-		std::cout << "POST: Content-Type: " << it->second << std::endl;
-		std::cout << "POST: The body size of request is => " << request.body.size() << std::endl;
+        std::cout << "handlePost: Content-Type is not multipart/form-data..." << std::endl;
+		std::cout << "handlePost: Content-Type => " << it->second << std::endl;
+		std::cout << "handlePost: The body size of request is => " << request.body.size() << std::endl;
+
+
+				////////////////////////////////		BONUS
+		if (request.body.find("username=") != std::string::npos && request.body.find("password=") != std::string::npos) {
+
+			std::cout << "handlePost: start do the bonus part of POST ...\n";
+			std::string username;
+			std::string password;
+			size_t pos = request.body.find("username=");
+			if (pos != std::string::npos) {
+				size_t end = request.body.find("&", pos);
+				username = request.body.substr(pos + 9, end - (pos + 9));
+				pos = request.body.find("password=", end);
+				if (pos != std::string::npos) {
+					end = request.body.find("&", pos);
+					if (end == std::string::npos) end = request.body.length();
+					password = request.body.substr(pos + 9, end - (pos + 9));
+				}
+			}
+
+			if (username.length() >= 4 && password.length() >= 4 &&
+				all_of_custom(username.begin(), username.end(), ::isalnum) &&
+				all_of_custom(password.begin(), password.end(), ::isalnum)) {
+				
+					std::cout << "ENTRA SCURE PAGE ..." << std::endl;
+
+				UserData user_data;
+				user_data.username = username;
+				user_data.is_logged_in = true;
+				std::string session_id = sessionManager.create_session(user_data);
+				body = loadFileContent("/html/secure_page.html", "GET");
+				cookie_header = "session_id=" + session_id + "; Path=/; HttpOnly";
+
+				//std::cout << "====" << ParserURL::get_abs_url("/html/secure_page.html", CurrentServerConfig, "GET") << "====\n";
+
+
+				//std::cout << "BODY_CONTENT: \"" << body << "\"" << std::endl;
+
+				if (body == "") {
+					defaultErrPageSet(request, NOT_FOUND);
+					return;
+				}
+				status_code = OK;
+				status_text = RES_STATUS_OK;
+
+				std::stringstream	ss;
+				ss << body.size();
+				headers[CONTENT_LENGTH] = ss.str();
+				headers[CONTENT_SERVER] = "MyServer/1.0";
+				headers[CONTENT_DATE] = getHttpDate();
+				headers[CONTENT_CONNECTION] = "keep-alive";
+				headers[CONTENT_TYPE] = getContentType(".html");
+				headers[SET_COOKIE] = cookie_header;
+
+			} else {
+
+				body = "Login failed";
+				status_code = NOT_ALLOWED;
+				status_text = RES_STATUS_NOT_ALLOWED;
+				headers[CONTENT_SERVER] = "MyServer/1.0";
+				headers[CONTENT_DATE] = getHttpDate();
+				headers[CONTENT_TYPE] = getContentType(".html");
+				headers[CONTENT_CONNECTION] = "keep-alive";
+			}
+			return;
+		}
+
+
+
+				//////////////////////////////			BONUS
         //defaultErrPageSet(request, NOT_FOUND);
         return;
     }
@@ -415,10 +449,10 @@ void						HttpResponse::handlePost(const HttpRequest & request){
                 std::ofstream file(filepath.c_str(), std::ios::binary);
                 if (file.is_open()) {
 
-					std::cout << "POST:  File opened." << std::endl;
+					std::cout << "handlePost: File opened." << std::endl;
                     file.write(fileContent.c_str(), fileContent.size());
                     file.close();
-					std::cout << "Upload sucess !!!" << std::endl;
+					std::cout << "handlePost: Upload sucess !!!" << std::endl;
 					
 					if (filename.find(".py") != std::string::npos || filename.find(".pl") != std::string::npos){
 						
@@ -437,7 +471,7 @@ void						HttpResponse::handlePost(const HttpRequest & request){
                     return;
                 } else {
 
-					std::cout << "POST:  File can not open." << std::endl;
+					std::cout << "handlePost:  File can not open." << std::endl;
 					defaultErrPageSet(request, INTERNAL_SERVER_ERROR);
                     return;
                 }
@@ -556,8 +590,9 @@ HttpResponse::HttpResponse(const HttpRequest & request, int clt_fd)
 
 	std::string 	red_url = ParserURL::get_redireccion_url(request.url, CurrentServerConfig, "GET", CurrentPort); 
 	std::string     test_path = ParserURL::get_abs_url(request.url, CurrentServerConfig, request.method);
-	std::cout << "\n\nPARSERURL:   \"" << test_path << "\"\n" << std::endl;
-
+	std::cout << "\n\nHttpResponse: get_redirection_url => :   \"" << red_url << "\"" << std::endl;
+	std::cout << "HttpResponse: get_absolute_url => :   \"" << test_path << "\"" << std::endl;
+	std::cout << "HttpResponse: request.url => :   \"" << request.url << "\"\n" << std::endl;
 	// To see if exist the url in the configfile if no it will find the url (root + filename)
 	if (test_path == "" && red_url.empty()){
 
@@ -574,6 +609,7 @@ HttpResponse::HttpResponse(const HttpRequest & request, int clt_fd)
 
 	}
 
+	std::cout << "HttpResponse: => Ready to responde thos request!!!" << std::endl;
 	if(request.method == "GET")
 		handleGet(request);
 	else if (request.method == "POST")
